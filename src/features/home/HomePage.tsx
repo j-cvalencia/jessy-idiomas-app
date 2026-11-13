@@ -192,6 +192,19 @@ export function HomePage() {
   const [activeLevel, setActiveLevel] = useState(3)
   const panel = session && profile ? HOME_BY_ROLE[profile.role] : null
 
+  useEffect(() => {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduceMotion) return
+
+    const html = document.documentElement
+    const previous = html.style.scrollBehavior
+    html.style.scrollBehavior = 'smooth'
+
+    return () => {
+      html.style.scrollBehavior = previous
+    }
+  }, [])
+
   const accessUrl = panel ?? '/login'
   const accessText = panel ? 'Ir a mi panel' : 'Ingresar a la plataforma'
 
