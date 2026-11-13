@@ -1,57 +1,100 @@
-
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/features/auth/auth-context'
 import { HOME_BY_ROLE } from '@/lib/types'
 
 const GREETINGS = ['hablar.', 'aprender.', 'avanzar.', 'comunicarte.']
 
+const PHRASES = ["Let's practice", 'You can do it', 'Hello!', 'How are you?', 'Nice to meet you']
+
 const LEVELS = [
   {
     code: 'A1',
     name: 'Principiante',
-    text: 'Presentarte, hablar de tu familia y tu rutina. Verb to be, verb to have y vocabulario básico.',
+    text: 'Presentarte, hablar de tu familia y tu rutina. Verb to be, verb to have, there is / there are.',
+    tone: 'blue',
   },
   {
     code: 'A2',
     name: 'Básico',
     text: 'Contar lo que hiciste, hacer planes y resolver situaciones del día a día.',
+    tone: 'blue',
   },
   {
     code: 'B1',
     name: 'Intermedio',
     text: 'Dar tu opinión, explicar experiencias y mantener una conversación con soltura.',
+    tone: 'red',
   },
   {
     code: 'B2',
     name: 'Intermedio alto',
     text: 'Debatir, entender series y conversaciones reales, y prepararte para el trabajo o un examen.',
+    tone: 'red',
   },
   {
     code: 'C1',
     name: 'Avanzado',
     text: 'Expresarte con fluidez y utilizar el inglés en contextos académicos y profesionales.',
+    tone: 'blue',
   },
-]
+] as const
 
-const STEPS = [
+const ICON_PROPS = {
+  width: 22,
+  height: 22,
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 2,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+  'aria-hidden': true,
+} as const
+
+const BookIcon = (
+  <svg {...ICON_PROPS}>
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+  </svg>
+)
+
+const UsersIcon = (
+  <svg {...ICON_PROPS}>
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+)
+
+const ChatIcon = (
+  <svg {...ICON_PROPS}>
+    <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+  </svg>
+)
+
+const STEPS: { number: string; title: string; text: string; icon: ReactNode; circle: string }[] = [
   {
     number: '1.',
     title: 'Prepárate',
     text: 'Antes de clase entras a la plataforma y conoces el vocabulario del tema en pocos minutos.',
-    icon: '▣',
+    icon: BookIcon,
+    circle: 'border-brand bg-white text-brand',
   },
   {
     number: '2.',
     title: 'Vive la clase',
     text: 'En la academia, con tu profesor y tu grupo: hablas, juegas y participas desde el primer día.',
-    icon: '♧',
+    icon: UsersIcon,
+    circle: 'border-brand bg-brand text-white',
   },
   {
     number: '3.',
     title: 'Repasa',
-    text: 'Después de clase practicas el tema conversando en inglés y recibes correcciones.',
-    icon: '◌',
+    text: 'Después de clase practicas el tema conversando en inglés y recibes correcciones al instante.',
+    icon: ChatIcon,
+    circle: 'border-accent bg-accent text-white',
   },
 ]
 
@@ -70,29 +113,83 @@ const GALLERY = [
   },
 ]
 
+/**
+ * Todas las palabras ocupan la misma celda de una cuadrícula: la caja siempre tiene
+ * el ancho de la palabra más larga, así que nunca cambia de tamaño. Solo se
+ * cruzan con un desvanecido suave.
+ */
 function RotatingGreeting() {
   const [index, setIndex] = useState(0)
 
   useEffect(() => {
     const id = window.setInterval(() => {
       setIndex((current) => (current + 1) % GREETINGS.length)
-    }, 2400)
+    }, 2600)
 
     return () => window.clearInterval(id)
   }, [])
 
   return (
-    <span
-      key={index}
-      className="inline-block text-blue-400 transition-all duration-300"
-    >
-      {GREETINGS[index]}
+    <span className="inline-grid">
+      {GREETINGS.map((word, i) => (
+        <span
+          key={word}
+          aria-hidden={i !== index}
+          className={`col-start-1 row-start-1 whitespace-nowrap text-blue-400 transition-all duration-700 ease-in-out ${
+            i === index ? 'translate-y-0 opacity-100 blur-0' : 'translate-y-[0.3em] opacity-0 blur-sm'
+          }`}
+        >
+          {word}
+        </span>
+      ))}
     </span>
+  )
+}
+
+/**
+ * Carrusel infinito. El carril tiene dos grupos idénticos y se desplaza exactamente
+ * la mitad (-50%) en bucle, así el reinicio es invisible. Cada grupo repite las
+ * frases varias veces para ser siempre más ancho que la pantalla (si no, quedaría
+ * un hueco a la derecha antes de reiniciar).
+ */
+const MARQUEE_GROUP = [...PHRASES, ...PHRASES, ...PHRASES, ...PHRASES]
+
+function PhraseMarquee() {
+  return (
+    <div className="overflow-hidden border-b-2 border-t-2 border-accent bg-brand py-3.5 text-white">
+      <style>{`
+        @keyframes jessy-marquee {
+          from { transform: translate3d(0, 0, 0); }
+          to { transform: translate3d(-50%, 0, 0); }
+        }
+        .jessy-marquee-track {
+          animation: jessy-marquee 50s linear infinite;
+          will-change: transform;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .jessy-marquee-track { animation: none !important; }
+        }
+      `}</style>
+
+      <div className="jessy-marquee-track flex w-max">
+        {[0, 1].map((copy) => (
+          <div key={copy} className="flex shrink-0 items-center" aria-hidden={copy === 1}>
+            {MARQUEE_GROUP.map((phrase, i) => (
+              <div key={`${copy}-${i}`} className="flex items-center">
+                <span className="whitespace-nowrap px-8 text-sm font-extrabold sm:text-base">{phrase}</span>
+                <span className="text-blue-200">✦</span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
 export function HomePage() {
   const { session, profile } = useAuth()
+  const [activeLevel, setActiveLevel] = useState(3)
   const panel = session && profile ? HOME_BY_ROLE[profile.role] : null
 
   const accessUrl = panel ?? '/login'
@@ -104,11 +201,7 @@ export function HomePage() {
       <header className="sticky top-0 z-30 border-b border-white/10 bg-ink">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-3 sm:px-8">
           <Link to="/" className="flex shrink-0 items-center gap-2.5">
-            <img
-              src="/favicon.svg"
-              alt="Jessy Idiomas"
-              className="h-9 w-9 rounded-full"
-            />
+            <img src="/favicon.svg" alt="Jessy Idiomas" className="h-9 w-9 rounded-full" />
             <span className="font-display text-sm font-extrabold tracking-wide text-white">
               JESSY IDIOMAS
             </span>
@@ -140,7 +233,7 @@ export function HomePage() {
 
       {/* Portada principal */}
       <section
-        className="relative flex min-h-[500px] items-center overflow-hidden border-b-4 border-accent bg-ink bg-cover bg-center text-white sm:min-h-[570px]"
+        className="relative flex min-h-[500px] items-center overflow-hidden bg-ink bg-cover bg-center text-white sm:min-h-[570px]"
         style={{
           backgroundImage:
             "linear-gradient(90deg, rgba(18,22,28,.97) 0%, rgba(18,22,28,.88) 48%, rgba(18,22,28,.52) 100%), url('https://images.unsplash.com/photo-1529390079861-591de354faf5?auto=format&fit=crop&w=1800&q=90')",
@@ -163,8 +256,8 @@ export function HomePage() {
             </h1>
 
             <p className="mt-6 max-w-lg text-sm leading-6 text-slate-300 sm:text-base">
-              Clases en grupo en la academia y práctica en la plataforma antes
-              y después de cada clase, para que lo que aprendes se quede.
+              Clases en grupo en la academia y práctica en la plataforma antes y después de cada clase, para
+              que lo que aprendes se quede.
             </p>
 
             <div className="mt-7 flex flex-wrap items-center gap-3">
@@ -186,74 +279,65 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Franja de frases en inglés */}
-      <div className="overflow-hidden bg-brand py-3.5 text-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-around gap-8 px-5 text-sm font-extrabold sm:text-base">
-          <span className="whitespace-nowrap">Let's practice</span>
-          <span className="text-white/50">✦</span>
-          <span className="whitespace-nowrap">You can do it</span>
-          <span className="text-white/50">✦</span>
-          <span className="whitespace-nowrap">Hello!</span>
-          <span className="text-white/50">✦</span>
-          <span className="hidden whitespace-nowrap sm:inline">How are you?</span>
-          <span className="hidden text-white/50 sm:inline">✦</span>
-          <span className="hidden whitespace-nowrap md:inline">Nice to meet you</span>
-        </div>
-      </div>
+      {/* Franja de frases en inglés (carrusel infinito) */}
+      <PhraseMarquee />
 
       {/* Niveles */}
       <section id="niveles" className="scroll-mt-20 bg-surface py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-accent">
-            Niveles
-          </p>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-accent">Niveles</p>
 
           <h2 className="mt-2 max-w-xl font-display text-3xl font-black leading-tight sm:text-4xl">
             Un camino claro, de tus primeras palabras a la conversación
           </h2>
 
           <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {LEVELS.map((level, index) => (
-              <article
-                key={level.code}
-                className={`rounded-xl border p-5 transition duration-200 hover:-translate-y-1 hover:shadow-lg ${
-                  index === 3
-                    ? 'border-ink bg-ink text-white'
-                    : 'border-line bg-white text-ink'
-                }`}
-              >
-                <p
-                  className={`font-display text-3xl font-black ${
-                    index === 2
-                      ? 'text-accent'
-                      : index === 3
-                        ? 'text-red-400'
-                        : 'text-brand'
+            {LEVELS.map((level, index) => {
+              const active = index === activeLevel
+              const codeColor =
+                level.tone === 'red'
+                  ? active
+                    ? 'text-red-400'
+                    : 'text-accent'
+                  : active
+                    ? 'text-blue-400'
+                    : 'text-brand'
+
+              return (
+                <article
+                  key={level.code}
+                  tabIndex={0}
+                  onMouseEnter={() => setActiveLevel(index)}
+                  onFocus={() => setActiveLevel(index)}
+                  onClick={() => setActiveLevel(index)}
+                  className={`cursor-pointer rounded-xl border p-5 outline-none transition-all duration-300 ${
+                    active
+                      ? '-translate-y-1 border-ink bg-ink text-white shadow-lg'
+                      : 'border-line bg-white text-ink'
                   }`}
                 >
-                  {level.code}
-                </p>
+                  <p className={`font-display text-3xl font-black transition-colors duration-300 ${codeColor}`}>
+                    {level.code}
+                  </p>
 
-                <h3 className="mt-2 text-sm font-extrabold">{level.name}</h3>
+                  <h3 className="mt-2 text-sm font-extrabold">{level.name}</h3>
 
-                <p
-                  className={`mt-2 text-xs leading-5 ${
-                    index === 3 ? 'text-slate-300' : 'text-muted'
-                  }`}
-                >
-                  {level.text}
-                </p>
-              </article>
-            ))}
+                  <p
+                    className={`mt-2 text-xs leading-5 transition-colors duration-300 ${
+                      active ? 'text-slate-300' : 'text-muted'
+                    }`}
+                  >
+                    {level.text}
+                  </p>
+                </article>
+              )
+            })}
           </div>
         </div>
       </section>
 
       {/* Cómo estudiamos */}
-      <section
-        id="como-estudiamos"
-        className="scroll-mt-20 border-t border-line bg-white py-16 sm:py-20"
-      >
+      <section id="como-estudiamos" className="scroll-mt-20 border-t border-line bg-white py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-accent">
             Cómo estudiamos
@@ -264,14 +348,13 @@ export function HomePage() {
           </h2>
 
           <div className="relative mt-12 grid gap-9 md:grid-cols-3 md:gap-8">
-            <div className="absolute left-[12%] right-[12%] top-6 hidden h-0.5 bg-brand md:block" />
+            {/* Línea azul que une los círculos */}
+            <div className="absolute left-6 right-0 top-6 hidden h-0.5 bg-brand md:block" />
 
-            {STEPS.map((step, index) => (
+            {STEPS.map((step) => (
               <article key={step.number} className="relative">
                 <div
-                  className={`relative z-10 grid h-12 w-12 place-items-center rounded-full border-2 border-brand bg-white text-xl font-bold ${
-                    index === 1 ? 'bg-brand text-white' : 'text-brand'
-                  }`}
+                  className={`relative z-10 grid h-12 w-12 place-items-center rounded-full border-2 ${step.circle}`}
                 >
                   {step.icon}
                 </div>
@@ -280,9 +363,7 @@ export function HomePage() {
                   {step.number} {step.title}
                 </h3>
 
-                <p className="mt-2 max-w-sm text-xs leading-6 text-muted">
-                  {step.text}
-                </p>
+                <p className="mt-2 max-w-sm text-xs leading-6 text-muted">{step.text}</p>
               </article>
             ))}
           </div>
@@ -290,10 +371,7 @@ export function HomePage() {
       </section>
 
       {/* Galería de la academia */}
-      <section
-        id="academia"
-        className="scroll-mt-20 bg-surface py-16 sm:py-20"
-      >
+      <section id="academia" className="scroll-mt-20 bg-surface py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <div className="flex flex-wrap items-end justify-between gap-5">
             <div>
@@ -318,10 +396,7 @@ export function HomePage() {
 
           <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {GALLERY.map((photo) => (
-              <div
-                key={photo.src}
-                className="group h-56 overflow-hidden rounded-2xl bg-slate-200 sm:h-64"
-              >
+              <div key={photo.src} className="group h-56 overflow-hidden rounded-2xl bg-slate-200 sm:h-64">
                 <img
                   src={photo.src}
                   alt={photo.alt}
@@ -345,8 +420,7 @@ export function HomePage() {
             </h2>
 
             <p className="mt-4 max-w-md text-sm leading-6 text-white/85">
-              Escríbenos y te ayudamos a encontrar tu nivel y el horario que
-              mejor te queda.
+              Escríbenos y te ayudamos a encontrar tu nivel y el horario que mejor te queda.
             </p>
 
             <a
@@ -372,16 +446,10 @@ export function HomePage() {
       <footer className="bg-ink py-9 text-white">
         <div className="mx-auto grid max-w-7xl gap-8 px-5 sm:px-8 md:grid-cols-3">
           <div className="flex items-center gap-3">
-            <img
-              src="/favicon.svg"
-              alt=""
-              className="h-11 w-11 rounded-full"
-            />
+            <img src="/favicon.svg" alt="" className="h-11 w-11 rounded-full" />
             <div>
               <p className="text-xs font-extrabold">JESSY IDIOMAS</p>
-              <p className="mt-1 text-[10px] text-slate-400">
-                Academia de inglés
-              </p>
+              <p className="mt-1 text-[10px] text-slate-400">Academia de inglés</p>
             </div>
           </div>
 
