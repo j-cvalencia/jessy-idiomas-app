@@ -92,7 +92,7 @@ const STEPS: { number: string; title: string; text: string; icon: ReactNode; cir
   {
     number: '3.',
     title: 'Repasa',
-    text: 'Después de clase practicas el tema conversando en inglés y recibes correcciones al instante.',
+    text: 'Después de clase repasas el tema con ejercicios cortos desde tu celular y ves cómo avanzas.',
     icon: ChatIcon,
     circle: 'border-accent bg-accent text-white',
   },

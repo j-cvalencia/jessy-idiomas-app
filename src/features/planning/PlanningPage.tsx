@@ -106,7 +106,6 @@ export function PlanningPage() {
     const avg = active.reduce((sum, s) => sum + s.attendance, 0) / (active.length || 1)
     return {
       active: active.length,
-      practiced: active.filter((s) => s.practicedLastWeek).length,
       attendance: Math.round(avg),
       pending: active.filter((s) => s.paymentStatus === 'pendiente').length,
     }
@@ -156,11 +155,7 @@ export function PlanningPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Estudiantes activos" value={stats.active} />
-        <StatCard
-          label="Practicaron la semana pasada"
-          value={stats.practiced}
-          suffix={`de ${stats.active}`}
-        />
+        <StatCard label="Clases publicadas" value={groups.length - drafts} suffix={`de ${groups.length}`} />
         <StatCard label="Asistencia promedio" value={`${stats.attendance}%`} />
         <StatCard label="Pagos pendientes" value={stats.pending} alert />
       </div>
