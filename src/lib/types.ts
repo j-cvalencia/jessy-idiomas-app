@@ -11,6 +11,10 @@ export interface Profile {
   role: Role
   is_activated: boolean
   active: boolean
+  /** Usuario de los profesores (ej. "laurasmgo"). El estudiante y el director entran con documento. */
+  username?: string | null
+  /** La clave inicial es el documento: debe cambiarla antes de usar la plataforma. */
+  must_change_password?: boolean
 }
 
 /** Ruta de inicio de cada rol después de iniciar sesión. */

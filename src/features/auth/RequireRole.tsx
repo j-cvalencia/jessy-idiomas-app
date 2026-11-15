@@ -15,6 +15,8 @@ export function RequireRole({ roles, children }: { roles: Role[]; children: Reac
   if (loading) return <FullScreenLoader />
   if (!session) return <Navigate to="/login" replace state={{ from: location.pathname }} />
   if (!profile || !profile.active) return <Navigate to="/login" replace />
+  // La clave inicial es el documento: primero debe cambiarla.
+  if (profile.must_change_password) return <Navigate to="/cambiar-clave" replace />
   if (!roles.includes(profile.role)) return <Navigate to={HOME_BY_ROLE[profile.role]} replace />
 
   return <>{children}</>

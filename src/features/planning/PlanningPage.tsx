@@ -12,6 +12,8 @@ import {
   teacherShortName,
   useMockData,
   type Group,
+  paymentState,
+  studentAttendance,
 } from '@/lib/mock-data'
 
 /** "Semana del 9 al 13 de noviembre" (lunes a viernes de la semana actual). */
@@ -103,11 +105,11 @@ export function PlanningPage() {
 
   const stats = useMemo(() => {
     const active = students.filter((s) => s.active)
-    const avg = active.reduce((sum, s) => sum + s.attendance, 0) / (active.length || 1)
+    const avg = active.reduce((sum, s) => sum + studentAttendance(s), 0) / (active.length || 1)
     return {
       active: active.length,
       attendance: Math.round(avg),
-      pending: active.filter((s) => s.paymentStatus === 'pendiente').length,
+      pending: active.filter((s) => ['vencido', 'sin_pago'].includes(paymentState(s))).length,
     }
   }, [students])
 

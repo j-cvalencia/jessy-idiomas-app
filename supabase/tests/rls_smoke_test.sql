@@ -61,8 +61,13 @@ insert into class_sessions (id, group_id, lesson_id, scheduled_date, status) val
  ('40000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', current_date + 2, 'draft'),
  ('40000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000001', current_date, 'published');
 
-insert into payments (student_id, amount, period, method) values
- ('60000000-0000-0000-0000-000000000001', 200000, date_trunc('month', current_date), 'nequi');
+-- Valentina pagó 3 meses desde el 1 de este mes; Samuel 1 mes que vence en 3 días; Sara nunca ha pagado.
+insert into payments (student_id, amount, period, months, method) values
+ ('60000000-0000-0000-0000-000000000001', 600000, date_trunc('month', current_date), 3, 'nequi'),
+ ('60000000-0000-0000-0000-000000000002', 200000, (current_date + 3 - interval '1 month' + interval '1 day')::date, 1, 'efectivo');
+
+update profiles set username = 'laurap', must_change_password = true
+  where id = '00000000-0000-0000-0000-0000000000a1';
 
 -- ---------------------------------------------------------------------
 -- Reglas de horario (como director / base de datos)
@@ -119,6 +124,28 @@ begin
   raise notice 'OK meses estudiados = %', m;
 end $$;
 
+do $$
+declare v record;
+begin
+  select paid_until, payment_state into v from student_overview where id = '60000000-0000-0000-0000-000000000001';
+  if v.paid_until <> (date_trunc('month', current_date) + interval '3 months' - interval '1 day')::date
+    then raise exception 'FALLO: 3 meses cubren hasta %', v.paid_until; end if;
+  if v.payment_state <> 'al_dia' then raise exception 'FALLO: estado %', v.payment_state; end if;
+  select payment_state into v from student_overview where id = '60000000-0000-0000-0000-000000000002';
+  if v.payment_state <> 'por_vencer' then raise exception 'FALLO: debía estar por vencer, está %', v.payment_state; end if;
+  select payment_state into v from student_overview where id = '60000000-0000-0000-0000-000000000003';
+  if v.payment_state <> 'sin_pago' then raise exception 'FALLO: debía estar sin pago, está %', v.payment_state; end if;
+  raise notice 'OK pagos por meses y estados (al día, por vencer, sin pago)';
+end $$;
+
+do $$ begin
+  update profiles set username = 'Laura Gómez' where id = '00000000-0000-0000-0000-0000000000a2';
+  raise exception 'FALLO: aceptó un usuario con mayúsculas o espacios';
+exception when others then
+  if sqlerrm like 'FALLO%' then raise; end if;
+  raise notice 'OK formato del usuario';
+end $$;
+
 -- ---------------------------------------------------------------------
 -- Políticas por rol
 -- ---------------------------------------------------------------------
@@ -142,6 +169,22 @@ do $$ begin
   if (select count(*) from profiles) <> 1 then raise exception 'FALLO: profesor ve perfiles ajenos'; end if;
   if (select count(*) from rooms) <> 2 then raise exception 'FALLO: profesor no ve los salones'; end if;
   raise notice 'OK profesor ve solo lo suyo';
+end $$;
+
+do $$ begin
+  perform public.mark_password_changed();
+  if (select must_change_password from profiles where id = auth.uid()) then
+    raise exception 'FALLO: no se quitó la marca de cambiar clave';
+  end if;
+  raise notice 'OK el profesor marca su clave como cambiada';
+end $$;
+
+do $$ begin
+  update profiles set role = 'master' where id = auth.uid();
+  if (select role from profiles where id = auth.uid()) = 'master' then
+    raise exception 'FALLO: el profesor pudo cambiar su propio rol';
+  end if;
+  raise notice 'OK el profesor no puede editar su perfil';
 end $$;
 
 do $$ begin

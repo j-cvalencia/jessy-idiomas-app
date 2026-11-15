@@ -9,6 +9,7 @@
 // consulta o una mutación y las pantallas casi no cambian.
 import { useSyncExternalStore } from 'react'
 import raw from '@/data/mock.json'
+import { baseUsername, uniqueUsername } from '@/lib/username'
 
 export type Level = 'A1' | 'A2' | 'B1' | 'B2' | 'C1'
 export type Day = 'Lun' | 'Mar' | 'Mié' | 'Jue' | 'Vie' | 'Sáb' | 'Dom'
@@ -25,7 +26,18 @@ export interface Teacher {
   docNumber: string
   /** Niveles que puede enseñar (uno o varios). */
   levels: Level[]
+  /** Usuario para entrar: primer nombre + 2 letras de cada apellido (ej. "laurasmgo"). */
+  username: string
+  /**
+   * SOLO PARA EL MODO DEMO. En la base real la clave la guarda Supabase Auth cifrada
+   * y nunca pasa por aquí. Empieza siendo el documento del profesor.
+   */
+  password: string
+  /** Debe cambiar la clave al entrar (la inicial es su documento). */
+  mustChangePassword: boolean
 }
+
+export type NewTeacher = Omit<Teacher, 'id' | 'username' | 'password' | 'mustChangePassword'>
 
 export interface Group {
   id: string
@@ -52,10 +64,37 @@ export interface Student {
   phone: string
   groupId: string | null
   active: boolean
-  paymentStatus: 'al_dia' | 'pendiente'
-  /** Porcentaje de asistencia, 0–100. */
+  /** Último día cubierto por sus pagos (AAAA-MM-DD), o null si nunca ha pagado. */
+  paidUntil: string | null
+  /** Porcentaje de asistencia de ejemplo, 0–100. Si hay asistencia tomada, se usa esa. */
   attendance: number
   practicedLastWeek: boolean
+}
+
+export type PaymentMethod = 'efectivo' | 'transferencia' | 'nequi' | 'otro'
+
+export interface Payment {
+  id: string
+  studentId: string
+  /** Cuántos meses cubre este pago. */
+  months: number
+  /** Desde qué día cubre (AAAA-MM-DD). */
+  from: string
+  /** Hasta qué día cubre (AAAA-MM-DD). */
+  until: string
+  amount: number
+  method: PaymentMethod
+  /** Día en que se registró (AAAA-MM-DD). */
+  paidAt: string
+  notes: string
+}
+
+/** Asistencia de un estudiante en la clase de un grupo en una fecha. */
+export interface AttendanceRecord {
+  groupId: string
+  date: string
+  studentId: string
+  present: boolean
 }
 
 export interface Lesson {
@@ -69,13 +108,24 @@ export interface MockState {
   teachers: Teacher[]
   groups: Group[]
   students: Student[]
+  payments: Payment[]
+  attendance: AttendanceRecord[]
 }
 
 export type Result = { ok: true } | { ok: false; error: string }
 const fail = (error: string): Result => ({ ok: false, error })
 const ok: Result = { ok: true }
 
-const data = raw as unknown as MockState & { lessons: Lesson[] }
+type RawStudent = Omit<Student, 'paidUntil'> & {
+  paidUntil?: string | null
+  paymentStatus?: 'al_dia' | 'pendiente'
+}
+const data = raw as unknown as {
+  teachers: Teacher[]
+  groups: Group[]
+  students: RawStudent[]
+  lessons: Lesson[]
+}
 
 export const lessons: Lesson[] = data.lessons
 
@@ -84,8 +134,73 @@ export const lessons: Lesson[] = data.lessons
 // ---------------------------------------------------------------------
 const STORAGE_KEY = 'jessy-mock-v2'
 
+// ---------------------------------------------------------------------
+// Fechas (siempre en hora local, como texto AAAA-MM-DD)
+// ---------------------------------------------------------------------
+const pad = (n: number) => String(n).padStart(2, '0')
+const toISO = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+const fromISO = (iso: string) => {
+  const [y, m, d] = iso.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+export const todayISO = () => toISO(new Date())
+export function addDays(iso: string, days: number): string {
+  const d = fromISO(iso)
+  d.setDate(d.getDate() + days)
+  return toISO(d)
+}
+/** Suma meses respetando fin de mes: 31 ene + 1 mes = 28/29 feb. */
+export function addMonths(iso: string, months: number): string {
+  const d = fromISO(iso)
+  const day = d.getDate()
+  d.setDate(1)
+  d.setMonth(d.getMonth() + months)
+  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()
+  d.setDate(Math.min(day, last))
+  return toISO(d)
+}
+export const daysBetween = (a: string, b: string) =>
+  Math.round((fromISO(b).getTime() - fromISO(a).getTime()) / 86_400_000)
+/** "2026-12-15" → "15 dic 2026" */
+export function dateLabel(iso: string): string {
+  return fromISO(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+// Datos de ejemplo: "al día" cubre hasta dentro de 20 días; "pendiente" se venció hace 3.
+function exampleStudent(s: RawStudent): Student {
+  const { paymentStatus, ...rest } = s
+  const paidUntil =
+    s.paidUntil !== undefined
+      ? s.paidUntil
+      : paymentStatus === 'pendiente'
+        ? addDays(todayISO(), -3)
+        : addDays(todayISO(), 20)
+  return { ...rest, paidUntil }
+}
+
+/** Completa profesores guardados antes de existir el usuario y la clave. */
+function withCredentials(teachers: Teacher[]): Teacher[] {
+  const taken: string[] = []
+  return teachers.map((t) => {
+    const username = t.username || uniqueUsername(baseUsername(t.firstName, t.lastName), taken)
+    taken.push(username)
+    return {
+      ...t,
+      username,
+      password: t.password ?? t.docNumber,
+      mustChangePassword: t.mustChangePassword ?? true,
+    }
+  })
+}
+
 function initialState(): MockState {
-  return { teachers: data.teachers, groups: data.groups, students: data.students }
+  return {
+    teachers: withCredentials(data.teachers),
+    groups: data.groups,
+    students: data.students.map(exampleStudent),
+    payments: [],
+    attendance: [],
+  }
 }
 
 function load(): MockState {
@@ -95,8 +210,15 @@ function load(): MockState {
       const saved = JSON.parse(text)
       if (Array.isArray(saved?.teachers) && Array.isArray(saved?.groups) && Array.isArray(saved?.students)) {
         const loaded = saved as MockState
-        // Grupos guardados antes de existir la hora de salida.
-        return { ...loaded, groups: loaded.groups.map((g) => ({ ...g, endTime: g.endTime ?? '' })) }
+        return {
+          // Grupos guardados antes de existir la hora de salida.
+          groups: loaded.groups.map((g) => ({ ...g, endTime: g.endTime ?? '' })),
+          // Datos guardados antes de existir usuarios, pagos y asistencia.
+          teachers: withCredentials(loaded.teachers),
+          students: (loaded.students as RawStudent[]).map(exampleStudent),
+          payments: Array.isArray(loaded.payments) ? loaded.payments : [],
+          attendance: Array.isArray(loaded.attendance) ? loaded.attendance : [],
+        }
       }
     }
   } catch {
@@ -227,12 +349,54 @@ function teacherProblem(
 // ---------------------------------------------------------------------
 // Profesores
 // ---------------------------------------------------------------------
-export function createTeacher(input: Omit<Teacher, 'id'>): Result {
+export type CreateTeacherResult = { ok: true; username: string } | { ok: false; error: string }
+
+/** Crea el profesor con su usuario. La clave inicial es su documento y debe cambiarla al entrar. */
+export function createTeacher(input: NewTeacher): CreateTeacherResult {
   if (state.teachers.some((t) => t.docNumber === input.docNumber)) {
-    return fail('Ya existe un profesor con ese documento.')
+    return { ok: false, error: 'Ya existe un profesor con ese documento.' }
   }
-  const teacher: Teacher = { ...input, id: `t-${Date.now().toString(36)}` }
+  const username = uniqueUsername(
+    baseUsername(input.firstName, input.lastName),
+    state.teachers.map((t) => t.username),
+  )
+  const teacher: Teacher = {
+    ...input,
+    id: `t-${Date.now().toString(36)}`,
+    username,
+    password: input.docNumber,
+    mustChangePassword: true,
+  }
   update((s) => ({ ...s, teachers: [...s.teachers, teacher] }))
+  return { ok: true, username }
+}
+
+/** Vuelve a poner como clave el documento y obliga a cambiarla (cuando el profesor la olvida). */
+export function resetTeacherPassword(id: string) {
+  update((s) => ({
+    ...s,
+    teachers: s.teachers.map((t) =>
+      t.id === id ? { ...t, password: t.docNumber, mustChangePassword: true } : t,
+    ),
+  }))
+}
+
+/** SOLO MODO DEMO: revisa usuario (o documento) y clave de un profesor. */
+export function checkTeacherLogin(login: string, password: string): Teacher | null {
+  const value = login.trim().toLowerCase()
+  const t = state.teachers.find((x) => x.username === value || x.docNumber === value.replace(/\D/g, ''))
+  return t && t.password === password ? t : null
+}
+
+export function changeTeacherPassword(id: string, password: string): Result {
+  const t = state.teachers.find((x) => x.id === id)
+  if (!t) return fail('El profesor no existe.')
+  if (password.length < 8) return fail('La clave debe tener al menos 8 caracteres.')
+  if (password === t.docNumber) return fail('La clave nueva no puede ser tu número de documento.')
+  update((s) => ({
+    ...s,
+    teachers: s.teachers.map((x) => (x.id === id ? { ...x, password, mustChangePassword: false } : x)),
+  }))
   return ok
 }
 
@@ -371,4 +535,143 @@ export function publishAll(): number {
   const drafts = state.groups.filter((g) => g.status === 'draft').length
   update((s) => ({ ...s, groups: s.groups.map((g) => ({ ...g, status: 'published' as const })) }))
   return drafts
+}
+
+// ---------------------------------------------------------------------
+// Pagos (registro manual del director)
+// ---------------------------------------------------------------------
+/** Días antes del vencimiento en que el estudiante pasa a "próximo a vencer". */
+export const DUE_SOON_DAYS = 7
+
+export type PaymentState = 'al_dia' | 'por_vencer' | 'vencido' | 'sin_pago'
+
+export function paymentState(s: Pick<Student, 'paidUntil'>, today = todayISO()): PaymentState {
+  if (!s.paidUntil) return 'sin_pago'
+  const left = daysBetween(today, s.paidUntil)
+  if (left < 0) return 'vencido'
+  if (left <= DUE_SOON_DAYS) return 'por_vencer'
+  return 'al_dia'
+}
+
+/** Días que le quedan (negativo si ya se venció). Null si nunca ha pagado. */
+export function daysLeft(s: Pick<Student, 'paidUntil'>, today = todayISO()): number | null {
+  return s.paidUntil ? daysBetween(today, s.paidUntil) : null
+}
+
+/** El siguiente pago empieza al día siguiente de lo ya cubierto, o hoy si está vencido. */
+export function nextPaymentStart(s: Pick<Student, 'paidUntil'>, today = todayISO()): string {
+  return s.paidUntil && s.paidUntil >= today ? addDays(s.paidUntil, 1) : today
+}
+
+/** Último día que cubre un pago de `months` meses que empieza en `from`. */
+export const coverageUntil = (from: string, months: number) => addDays(addMonths(from, months), -1)
+
+export interface NewPayment {
+  studentId: string
+  months: number
+  from: string
+  amount: number
+  method: PaymentMethod
+  notes?: string
+}
+
+export function registerPayment(input: NewPayment): Result {
+  const student = state.students.find((s) => s.id === input.studentId)
+  if (!student) return fail('El estudiante no existe.')
+  if (!Number.isInteger(input.months) || input.months < 1 || input.months > 24)
+    return fail('Elige entre 1 y 24 meses.')
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.from)) return fail('Elige desde qué fecha cubre el pago.')
+  if (!(input.amount > 0)) return fail('Escribe el valor pagado.')
+
+  const until = coverageUntil(input.from, input.months)
+  const payment: Payment = {
+    id: `p-${Date.now().toString(36)}`,
+    studentId: input.studentId,
+    months: input.months,
+    from: input.from,
+    until,
+    amount: input.amount,
+    method: input.method,
+    paidAt: todayISO(),
+    notes: input.notes?.trim() ?? '',
+  }
+  update((s) => ({
+    ...s,
+    payments: [payment, ...s.payments],
+    students: s.students.map((st) =>
+      st.id === input.studentId && (!st.paidUntil || until > st.paidUntil) ? { ...st, paidUntil: until } : st,
+    ),
+  }))
+  return ok
+}
+
+/** Borra un pago registrado por error y recalcula hasta cuándo queda cubierto el estudiante. */
+export function deletePayment(id: string) {
+  const payment = state.payments.find((p) => p.id === id)
+  if (!payment) return
+  update((s) => {
+    const payments = s.payments.filter((p) => p.id !== id)
+    const remaining = payments.filter((p) => p.studentId === payment.studentId).map((p) => p.until)
+    const latest = remaining.length ? remaining.sort().at(-1)! : null
+    return {
+      ...s,
+      payments,
+      students: s.students.map((st) => (st.id === payment.studentId ? { ...st, paidUntil: latest } : st)),
+    }
+  })
+}
+
+export const paymentsOf = (studentId: string) => state.payments.filter((p) => p.studentId === studentId)
+
+// ---------------------------------------------------------------------
+// Profesor: sus grupos y la asistencia
+// ---------------------------------------------------------------------
+const JS_DAY_TO_DAY: Day[] = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+
+/** "2026-11-16" → "Lun" */
+export const dayOfDate = (iso: string): Day => JS_DAY_TO_DAY[fromISO(iso).getDay()]
+
+/** "2026-11-16" → "lunes 16 de noviembre" */
+export function longDateLabel(iso: string): string {
+  return fromISO(iso).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
+}
+
+export const groupsOfTeacher = (teacherId: string) => state.groups.filter((g) => g.teacherId === teacherId)
+
+/** La clase publicada por el director para el grupo, o null si aún no la publica. */
+export function publishedLesson(group: Group): Lesson | null {
+  if (group.status !== 'published') return null
+  return lessonsOfLevel(group.level).find((l) => l.number === group.plannedLessonNumber) ?? null
+}
+
+/** Asistencia ya tomada para un grupo en una fecha: { idEstudiante: presente }. */
+export function attendanceOn(groupId: string, date: string): Record<string, boolean> {
+  return Object.fromEntries(
+    state.attendance
+      .filter((a) => a.groupId === groupId && a.date === date)
+      .map((a) => [a.studentId, a.present]),
+  )
+}
+
+export function saveAttendance(groupId: string, date: string, marks: Record<string, boolean>): Result {
+  if (!state.groups.some((g) => g.id === groupId)) return fail('El grupo no existe.')
+  if (date > todayISO()) return fail('No se puede tomar asistencia de una clase que aún no ha pasado.')
+  const records: AttendanceRecord[] = Object.entries(marks).map(([studentId, present]) => ({
+    groupId,
+    date,
+    studentId,
+    present,
+  }))
+  update((s) => ({
+    ...s,
+    attendance: [...s.attendance.filter((a) => !(a.groupId === groupId && a.date === date)), ...records],
+  }))
+  return ok
+}
+
+/** % de asistencia del estudiante: con la asistencia tomada si existe, si no el dato de ejemplo. */
+export function studentAttendance(s: Student): number {
+  const mine = state.attendance.filter((a) => a.studentId === s.id)
+  if (mine.length === 0) return s.attendance
+  return Math.round((100 * mine.filter((a) => a.present).length) / mine.length)
 }

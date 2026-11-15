@@ -1,21 +1,22 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
-import { DocumentInput } from '@/components/ui/DocumentInput'
+import { LoginInput } from '@/components/ui/LoginInput'
 import { TextInput } from '@/components/ui/TextInput'
 import { isValidDocument } from '@/lib/document'
+import { fullName, useMockData } from '@/lib/mock-data'
+import { isUsername } from '@/lib/username'
 import { HOME_BY_ROLE, type Role } from '@/lib/types'
 import { useAuth } from './auth-context'
 
 const DEMO_ROLES: [Role, string][] = [
   ['master', 'Director'],
-  ['teacher', 'Profesor'],
   ['student', 'Estudiante'],
 ]
 
 export function LoginPage() {
   const { signIn, signInAsDemo, session, profile } = useAuth()
-  const [document, setDocument] = useState('')
+  const [login, setLogin] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -25,13 +26,13 @@ export function LoginPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
-    if (!isValidDocument(document)) {
-      setError('Revisa el número de documento.')
+    if (!isUsername(login) && !isValidDocument(login)) {
+      setError('Escribe tu usuario o tu número de documento.')
       return
     }
     setSubmitting(true)
     try {
-      await signIn(document, password)
+      await signIn(login, password)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión')
     } finally {
@@ -54,12 +55,12 @@ export function LoginPage() {
         className="mx-5 -mt-12 flex max-w-md flex-col gap-4 self-center rounded-2xl bg-white p-6 shadow-xl sm:w-full"
       >
         <h1 className="font-display text-2xl font-extrabold">Ingresar</h1>
-        <DocumentInput
-          id="document"
-          label="Número de documento"
-          value={document}
-          onChange={setDocument}
-          hint="Por seguridad solo mostramos los últimos 4 dígitos."
+        <LoginInput
+          id="login"
+          label="Usuario o número de documento"
+          value={login}
+          onChange={setLogin}
+          hint="Profesores: entren con su usuario. Del documento solo mostramos los últimos 4 dígitos."
         />
         <TextInput
           id="password"
@@ -87,13 +88,14 @@ export function LoginPage() {
         <div className="mx-5 mt-8 flex max-w-md flex-col gap-3 self-center rounded-2xl border-2 border-dashed border-warn bg-warn-soft p-4 sm:w-full">
           <span className="font-bold text-warn">Modo demo · solo desarrollo</span>
           <span className="text-sm">Entra sin base de datos para ver las pantallas de cada rol.</span>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {DEMO_ROLES.map(([role, label]) => (
               <Button key={role} type="button" variant="secondary" onClick={() => signInAsDemo(role)}>
                 {label}
               </Button>
             ))}
           </div>
+          <DemoTeachers />
         </div>
       )}
 
@@ -105,5 +107,43 @@ export function LoginPage() {
         </Link>
       </div>
     </main>
+  )
+}
+
+/** Modo demo: profesores creados por el director, para entrar con un clic o con su usuario. */
+function DemoTeachers() {
+  const { teachers } = useMockData()
+  const { signInAsDemo } = useAuth()
+  if (!signInAsDemo) return null
+
+  if (teachers.length === 0) {
+    return (
+      <p className="text-sm">
+        <span className="font-semibold">Profesor:</span> crea uno como Director en «Grupos y profesores» y
+        entra aquí con su usuario y su documento como clave.
+      </p>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-2 border-t border-warn/30 pt-3">
+      <span className="text-sm font-semibold">
+        Profesores creados (usuario · clave inicial: su documento)
+      </span>
+      <ul className="flex flex-col gap-1.5">
+        {teachers.map((t) => (
+          <li key={t.id}>
+            <button
+              type="button"
+              onClick={() => signInAsDemo('teacher', t.id)}
+              className="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-line bg-white px-3 text-left text-sm hover:border-brand"
+            >
+              <span className="font-semibold">{fullName(t)}</span>
+              <span className="font-mono text-xs text-muted">{t.username}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }

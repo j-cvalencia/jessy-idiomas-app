@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/features/auth/auth-context'
-import { useMockData } from '@/lib/mock-data'
+import { paymentDetail } from '@/features/payments/payment-text'
+import { daysLeft, fullName, paymentState, useMockData } from '@/lib/mock-data'
 
 interface Detail {
   label: string
@@ -69,6 +70,14 @@ export function DirectorHomePage() {
   const teachersWithGroups = teachers.filter((t) => groups.some((g) => g.teacherId === t.id)).length
   const teachersFree = teachers.length - teachersWithGroups
 
+  const byPayment = (state: string) => activeStudents.filter((s) => paymentState(s) === state)
+  const dueSoon = byPayment('por_vencer')
+  const overdue = [...byPayment('vencido'), ...byPayment('sin_pago')]
+  // Para recordarles a tiempo: primero los que vencen antes.
+  const toRemind = [...dueSoon, ...overdue]
+    .sort((a, b) => (daysLeft(a) ?? -9999) - (daysLeft(b) ?? -9999))
+    .slice(0, 8)
+
   return (
     <section className="flex flex-col gap-8">
       <header>
@@ -115,7 +124,46 @@ export function DirectorHomePage() {
           ]}
           action="Ver profesores"
         />
+
+        <SummaryCard
+          to="/director/pagos"
+          title="Pagos"
+          value={byPayment('al_dia').length}
+          unit="al día"
+          details={[
+            { label: 'Próximos a vencer (7 días)', value: dueSoon.length, alert: true },
+            { label: 'Vencidos o sin pagos', value: overdue.length, alert: true },
+          ]}
+          action="Ver pagos"
+        />
       </div>
+
+      {toRemind.length > 0 && (
+        <div className="rounded-2xl border border-line bg-white">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-4">
+            <h2 className="font-display text-xl font-extrabold">Para recordarles el pago</h2>
+            <Link to="/director/pagos" className="text-sm font-bold text-brand hover:underline">
+              Registrar pagos
+            </Link>
+          </div>
+          <ul>
+            {toRemind.map((s) => {
+              const late = paymentState(s) !== 'por_vencer'
+              return (
+                <li
+                  key={s.id}
+                  className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-5 py-3 text-sm"
+                >
+                  <span className="font-semibold">{fullName(s)}</span>
+                  <span className={`font-semibold ${late ? 'text-accent' : 'text-warn'}`}>
+                    {paymentDetail(s)}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
     </section>
   )
 }

@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
-import { documentToEmail } from '@/lib/document'
+import { loginToEmail } from '@/lib/username'
 import type { Profile } from '@/lib/types'
 import { AuthContext, type AuthState } from './auth-context'
 
 async function fetchProfile(userId: string): Promise<Profile | null> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, doc_type, doc_number, first_name, last_name, role, is_activated, active')
+    .select(
+      'id, doc_type, doc_number, first_name, last_name, role, is_activated, active, username, must_change_password',
+    )
     .eq('id', userId)
     .single()
   if (error) {
@@ -44,21 +46,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const signIn = useCallback(async (document: string, password: string) => {
+  const signIn = useCallback(async (login: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
-      email: documentToEmail(document),
+      email: loginToEmail(login),
       password,
     })
-    if (error) throw new Error('Documento o contraseña incorrectos')
+    if (error) throw new Error('Usuario o contraseña incorrectos')
   }, [])
+
+  const changePassword = useCallback(
+    async (newPassword: string) => {
+      if (!session || !profile) throw new Error('Inicia sesión de nuevo.')
+      if (newPassword.length < 8) throw new Error('La clave debe tener al menos 8 caracteres.')
+      if (newPassword === profile.doc_number)
+        throw new Error('La clave nueva no puede ser tu número de documento.')
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      if (error) throw new Error('No se pudo cambiar la clave. Intenta de nuevo.')
+      // Quita la marca con una función de la base (el usuario no puede editar su perfil directamente).
+      const { error: rpcError } = await supabase.rpc('mark_password_changed')
+      if (rpcError) throw new Error('La clave cambió, pero no se pudo guardar. Avísale a la academia.')
+      setProfile(await fetchProfile(session.user.id))
+    },
+    [session, profile],
+  )
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut()
   }, [])
 
   const value = useMemo<AuthState>(
-    () => ({ session, profile, loading, signIn, signOut }),
-    [session, profile, loading, signIn, signOut],
+    () => ({ session, profile, loading, signIn, signOut, changePassword }),
+    [session, profile, loading, signIn, signOut, changePassword],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

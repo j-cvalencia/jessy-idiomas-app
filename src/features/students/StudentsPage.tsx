@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { maskDocument } from '@/lib/document'
-import { fullName, scheduleLabel, teacherShortName, useMockData } from '@/lib/mock-data'
+import { PaymentBadge } from '@/features/payments/PaymentBadge'
+import { fullName, scheduleLabel, studentAttendance, teacherShortName, useMockData } from '@/lib/mock-data'
+import { usePersistentState } from '@/lib/use-persistent-state'
 
 const normalize = (text: string) =>
   text
@@ -13,9 +15,16 @@ const fieldClass =
 
 export function StudentsPage() {
   const { students, groups, teachers } = useMockData()
-  const [query, setQuery] = useState('')
-  const [groupId, setGroupId] = useState('all')
-  const [status, setStatus] = useState('all')
+  // Los filtros se recuerdan al cambiar de pantalla y volver.
+  const [query, setQuery] = usePersistentState('estudiantes.busqueda', '')
+  const [savedGroupId, setGroupId] = usePersistentState('estudiantes.grupo', 'all')
+  const [status, setStatus] = usePersistentState('estudiantes.estado', 'all')
+  // Si el grupo guardado ya no existe (lo eliminaron), se vuelve a "Todos los grupos".
+  const groupId =
+    savedGroupId === 'all' || savedGroupId === 'none' || groups.some((g) => g.id === savedGroupId)
+      ? savedGroupId
+      : 'all'
+  const hasFilters = query !== '' || groupId !== 'all' || status !== 'all'
 
   const filtered = useMemo(() => {
     const q = normalize(query.trim())
@@ -72,11 +81,24 @@ export function StudentsPage() {
           <option value="active">Activos</option>
           <option value="inactive">Inactivos</option>
         </select>
+        {hasFilters && (
+          <button
+            type="button"
+            onClick={() => {
+              setQuery('')
+              setGroupId('all')
+              setStatus('all')
+            }}
+            className="min-h-11 px-2 text-sm font-semibold text-brand hover:underline"
+          >
+            Limpiar filtros
+          </button>
+        )}
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-line bg-white">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[820px] text-left text-sm">
+          <table className="w-full min-w-[960px] text-left text-sm">
             <thead className="bg-surface text-xs uppercase tracking-wide text-muted">
               <tr>
                 <th className="px-5 py-3 font-semibold">Estudiante</th>
@@ -84,6 +106,7 @@ export function StudentsPage() {
                 <th className="px-3 py-3 font-semibold">Grupo</th>
                 <th className="px-3 py-3 font-semibold">Profesor</th>
                 <th className="px-3 py-3 font-semibold">Asistencia</th>
+                <th className="px-3 py-3 font-semibold">Pago</th>
                 <th className="px-5 py-3 font-semibold">Estado</th>
               </tr>
             </thead>
@@ -120,9 +143,16 @@ export function StudentsPage() {
                       {group ? teacherShortName(teacher) : <span className="text-muted">—</span>}
                     </td>
                     <td
-                      className={`px-3 py-3.5 font-semibold tabular-nums ${s.attendance < 75 ? 'text-accent' : ''}`}
+                      className={`px-3 py-3.5 font-semibold tabular-nums ${studentAttendance(s) < 75 ? 'text-accent' : ''}`}
                     >
-                      {s.attendance}%
+                      {studentAttendance(s)}%
+                    </td>
+                    <td className="px-3 py-3.5">
+                      {s.active ? (
+                        <PaymentBadge student={s} withDetail />
+                      ) : (
+                        <span className="text-muted">—</span>
+                      )}
                     </td>
                     <td className="px-5 py-3.5">
                       {s.active ? (
@@ -140,7 +170,7 @@ export function StudentsPage() {
               })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-10 text-center text-muted">
+                  <td colSpan={7} className="px-5 py-10 text-center text-muted">
                     No hay estudiantes con esos filtros.
                   </td>
                 </tr>

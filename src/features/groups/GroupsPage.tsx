@@ -10,6 +10,7 @@ import {
   assignTeacher,
   createGroup,
   createTeacher,
+  resetTeacherPassword,
   deleteGroup,
   deleteTeacher,
   fullName,
@@ -143,7 +144,13 @@ function ScheduleFields({
 // ---------------------------------------------------------------------
 // Formulario: nuevo profesor
 // ---------------------------------------------------------------------
-function TeacherForm({ onDone, onCancel }: { onDone: (name: string) => void; onCancel: () => void }) {
+function TeacherForm({
+  onDone,
+  onCancel,
+}: {
+  onDone: (name: string, username: string) => void
+  onCancel: () => void
+}) {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [phone, setPhone] = useState('')
@@ -169,7 +176,7 @@ function TeacherForm({ onDone, onCancel }: { onDone: (name: string) => void; onC
       levels: LEVELS.filter((l) => levels.includes(l)),
     })
     if (!result.ok) return setError(result.error)
-    onDone(`${firstName.trim()} ${lastName.trim()}`)
+    onDone(`${firstName.trim()} ${lastName.trim()}`, result.username)
   }
 
   return (
@@ -667,9 +674,12 @@ export function GroupsPage() {
       {panel === 'teacher' && (
         <TeacherForm
           onCancel={() => setPanel(null)}
-          onDone={(name) => {
+          onDone={(name, username) => {
             setPanel(null)
-            setNotice({ kind: 'ok', text: `Se creó al profesor ${name}.` })
+            setNotice({
+              kind: 'ok',
+              text: `Se creó al profesor ${name}. Usuario: ${username} · Clave inicial: su número de documento (la cambia al entrar por primera vez).`,
+            })
           }}
         />
       )}
@@ -795,6 +805,7 @@ export function GroupsPage() {
             <thead className="bg-surface text-xs uppercase tracking-wide text-muted">
               <tr>
                 <th className="px-5 py-3 font-semibold">Profesor</th>
+                <th className="px-3 py-3 font-semibold">Usuario</th>
                 <th className="px-3 py-3 font-semibold">Documento</th>
                 <th className="px-3 py-3 font-semibold">Teléfono</th>
                 <th className="px-3 py-3 font-semibold">Niveles</th>
@@ -815,6 +826,12 @@ export function GroupsPage() {
                     <td className="px-5 py-3.5 font-semibold">
                       {fullName(t)} <span className="font-normal text-muted">({teacherShortName(t)})</span>
                     </td>
+                    <td className="px-3 py-3.5">
+                      <span className="font-mono text-sm font-semibold">{t.username}</span>
+                      {t.mustChangePassword && (
+                        <span className="mt-0.5 block text-xs text-warn">Clave inicial: su documento</span>
+                      )}
+                    </td>
                     <td className="px-3 py-3.5 tabular-nums text-ink-soft">CC {maskDocument(t.docNumber)}</td>
                     <td className="px-3 py-3.5 text-ink-soft">{t.phone}</td>
                     <td className="px-3 py-3.5">{t.levels.join(' · ')}</td>
@@ -826,7 +843,20 @@ export function GroupsPage() {
                       )}
                     </td>
                     <td className="px-3 py-3.5 font-semibold tabular-nums">{total}</td>
-                    <td className="px-5 py-3.5 text-right">
+                    <td className="space-x-3 whitespace-nowrap px-5 py-3.5 text-right">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          resetTeacherPassword(t.id)
+                          setNotice({
+                            kind: 'ok',
+                            text: `La clave de ${fullName(t)} volvió a ser su documento. Deberá cambiarla al entrar.`,
+                          })
+                        }}
+                        className="text-xs font-semibold text-muted underline underline-offset-2 hover:text-brand"
+                      >
+                        Restablecer clave
+                      </button>
                       <button
                         type="button"
                         onClick={() => {
@@ -847,7 +877,7 @@ export function GroupsPage() {
               })}
               {teachers.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-5 py-10 text-center text-muted">
+                  <td colSpan={8} className="px-5 py-10 text-center text-muted">
                     Todavía no hay profesores. Crea el primero con «Nuevo profesor».
                   </td>
                 </tr>
