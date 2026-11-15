@@ -4,8 +4,8 @@
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ''
 
-/** true si faltan los datos de Supabase (no existe .env.local o está incompleto). */
-const missingConfig = !supabaseUrl || !supabaseAnonKey
+/** true si faltan los datos de Supabase (no existe .env.local, está incompleto o tiene el valor de ejemplo). */
+const missingConfig = !supabaseUrl || !supabaseAnonKey || supabaseAnonKey === 'pega-aqui-la-anon-key'
 
 if (missingConfig) {
   console.warn(
