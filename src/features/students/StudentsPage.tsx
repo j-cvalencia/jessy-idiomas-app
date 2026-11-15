@@ -1,8 +1,11 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { Button } from '@/components/ui/Button'
 import { maskDocument } from '@/lib/document'
 import { PaymentBadge } from '@/features/payments/PaymentBadge'
 import { fullName, scheduleLabel, studentAttendance, teacherShortName, useMockData } from '@/lib/mock-data'
 import { usePersistentState } from '@/lib/use-persistent-state'
+import type { Student } from '@/lib/mock-data'
+import { StudentEditor } from './StudentEditor'
 
 const normalize = (text: string) =>
   text
@@ -15,6 +18,9 @@ const fieldClass =
 
 export function StudentsPage() {
   const { students, groups, teachers } = useMockData()
+  // undefined = panel cerrado; null = estudiante nuevo.
+  const [editing, setEditing] = useState<Student | null | undefined>(undefined)
+  const [notice, setNotice] = useState<string | null>(null)
   // Los filtros se recuerdan al cambiar de pantalla y volver.
   const [query, setQuery] = usePersistentState('estudiantes.busqueda', '')
   const [savedGroupId, setGroupId] = usePersistentState('estudiantes.grupo', 'all')
@@ -41,12 +47,21 @@ export function StudentsPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <header>
-        <h1 className="font-display text-4xl font-black">Estudiantes</h1>
-        <p className="mt-1 text-sm text-ink-soft">
-          {activeCount} estudiantes activos · {students.length} en total
-        </p>
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-display text-4xl font-black">Estudiantes</h1>
+          <p className="mt-1 text-sm text-ink-soft">
+            {activeCount} estudiantes activos · {students.length} en total
+          </p>
+        </div>
+        <Button onClick={() => setEditing(null)}>+ Nuevo estudiante</Button>
       </header>
+
+      {notice && (
+        <p role="status" className="rounded-lg bg-ok-soft px-4 py-3 text-sm font-semibold text-ok">
+          {notice}
+        </p>
+      )}
 
       <div className="flex flex-wrap gap-3">
         <input
@@ -107,7 +122,8 @@ export function StudentsPage() {
                 <th className="px-3 py-3 font-semibold">Profesor</th>
                 <th className="px-3 py-3 font-semibold">Asistencia</th>
                 <th className="px-3 py-3 font-semibold">Pago</th>
-                <th className="px-5 py-3 font-semibold">Estado</th>
+                <th className="px-3 py-3 font-semibold">Estado</th>
+                <th className="px-5 py-3" />
               </tr>
             </thead>
             <tbody>
@@ -119,7 +135,10 @@ export function StudentsPage() {
                   <tr key={s.id} className={`border-t border-line ${s.active ? '' : 'opacity-60'}`}>
                     <td className="px-5 py-3.5">
                       <p className="font-semibold">{fullName(s)}</p>
-                      <p className="text-xs text-muted">{s.phone}</p>
+                      <p className="text-xs text-muted">
+                        {s.phone}
+                        {s.email ? ` · ${s.email}` : ''}
+                      </p>
                     </td>
                     <td className="px-3 py-3.5 tabular-nums text-ink-soft">
                       {s.docType} {maskDocument(s.docNumber)}
@@ -154,7 +173,7 @@ export function StudentsPage() {
                         <span className="text-muted">—</span>
                       )}
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-3 py-3.5">
                       {s.active ? (
                         <span className="rounded-full bg-ok-soft px-3 py-1 text-xs font-bold text-ok">
                           Activo
@@ -165,12 +184,24 @@ export function StudentsPage() {
                         </span>
                       )}
                     </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNotice(null)
+                          setEditing(s)
+                        }}
+                        className="min-h-9 rounded-lg border border-line px-3 text-xs font-bold hover:border-brand hover:text-brand"
+                      >
+                        Editar
+                      </button>
+                    </td>
                   </tr>
                 )
               })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-5 py-10 text-center text-muted">
+                  <td colSpan={8} className="px-5 py-10 text-center text-muted">
                     No hay estudiantes con esos filtros.
                   </td>
                 </tr>
@@ -179,6 +210,18 @@ export function StudentsPage() {
           </table>
         </div>
       </div>
+
+      {editing !== undefined && (
+        <StudentEditor
+          key={editing?.id ?? 'nuevo'}
+          student={editing}
+          onClose={() => setEditing(undefined)}
+          onSaved={(text) => {
+            setEditing(undefined)
+            setNotice(text)
+          }}
+        />
+      )}
     </section>
   )
 }

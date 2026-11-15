@@ -6,6 +6,7 @@ import {
   lessonLabel,
   longDateLabel,
   publishedLesson,
+  roomById,
   scheduleLabel,
   studentsOfGroup,
   todayISO,
@@ -18,7 +19,8 @@ export function TeacherHomePage() {
   const { profile } = useAuth()
   const { groups, attendance } = useMockData()
   const today = todayISO()
-  const mine = groups.filter((g) => g.teacherId === profile?.id)
+  // El profesor solo ve los grupos que el director ya publicó.
+  const mine = groups.filter((g) => g.teacherId === profile?.id && g.published)
   const todays = mine.filter((g) => g.days.includes(dayOfDate(today)))
 
   if (mine.length === 0) {
@@ -57,7 +59,10 @@ export function TeacherHomePage() {
                 >
                   <div>
                     <p className="font-display text-lg font-extrabold">{g.name}</p>
-                    <p className="text-sm text-slate-300">{scheduleLabel(g)}</p>
+                    <p className="text-sm text-slate-300">
+                      {scheduleLabel(g)}
+                      {roomById(g.roomId) && ` · ${roomById(g.roomId)!.name}`}
+                    </p>
                   </div>
                   <Link
                     to={`/profesor/asistencia/${g.id}`}
@@ -100,7 +105,10 @@ function GroupCard({ group }: { group: Group }) {
             </span>
             {group.name}
           </p>
-          <p className="mt-1 text-sm text-ink-soft">{scheduleLabel(group)}</p>
+          <p className="mt-1 text-sm text-ink-soft">
+            {scheduleLabel(group)}
+            {roomById(group.roomId) && ` · ${roomById(group.roomId)!.name}`}
+          </p>
         </div>
         <span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-bold text-brand-dark">
           {students.length} alumnos

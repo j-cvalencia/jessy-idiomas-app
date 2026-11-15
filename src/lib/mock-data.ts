@@ -53,6 +53,20 @@ export interface Group {
   lastLessonNumber: number
   plannedLessonNumber: number
   status: PlanStatus
+  /** Salón donde se dicta (opcional). */
+  roomId: string | null
+  /**
+   * El profesor solo ve el grupo cuando el director lo publica.
+   * Mientras tanto es un borrador que el director puede armar con calma.
+   */
+  published: boolean
+}
+
+export interface Room {
+  id: string
+  name: string
+  /** Cupo máximo de alumnos (opcional). */
+  capacity: number | null
 }
 
 export interface Student {
@@ -62,6 +76,10 @@ export interface Student {
   docType: 'CC' | 'TI'
   docNumber: string
   phone: string
+  /** Datos de contacto adicionales (opcionales). */
+  email?: string
+  guardianName?: string
+  guardianPhone?: string
   groupId: string | null
   active: boolean
   /** Último día cubierto por sus pagos (AAAA-MM-DD), o null si nunca ha pagado. */
@@ -110,6 +128,7 @@ export interface MockState {
   students: Student[]
   payments: Payment[]
   attendance: AttendanceRecord[]
+  rooms: Room[]
 }
 
 export type Result = { ok: true } | { ok: false; error: string }
@@ -196,12 +215,22 @@ function withCredentials(teachers: Teacher[]): Teacher[] {
 function initialState(): MockState {
   return {
     teachers: withCredentials(data.teachers),
-    groups: data.groups,
+    groups: data.groups.map((g) => withGroupDefaults(g)),
     students: data.students.map(exampleStudent),
     payments: [],
     attendance: [],
+    rooms: [],
   }
 }
+
+/** Completa grupos guardados antes de existir el salón y la publicación. */
+const withGroupDefaults = (g: Group): Group => ({
+  ...g,
+  endTime: g.endTime ?? '',
+  roomId: g.roomId ?? null,
+  // Los grupos que ya existían se consideran publicados para no esconderlos del profesor.
+  published: g.published ?? true,
+})
 
 function load(): MockState {
   try {
@@ -212,12 +241,13 @@ function load(): MockState {
         const loaded = saved as MockState
         return {
           // Grupos guardados antes de existir la hora de salida.
-          groups: loaded.groups.map((g) => ({ ...g, endTime: g.endTime ?? '' })),
+          groups: loaded.groups.map(withGroupDefaults),
           // Datos guardados antes de existir usuarios, pagos y asistencia.
           teachers: withCredentials(loaded.teachers),
           students: (loaded.students as RawStudent[]).map(exampleStudent),
           payments: Array.isArray(loaded.payments) ? loaded.payments : [],
           attendance: Array.isArray(loaded.attendance) ? loaded.attendance : [],
+          rooms: Array.isArray(loaded.rooms) ? loaded.rooms : [],
         }
       }
     }
@@ -246,6 +276,9 @@ function update(change: (s: MockState) => MockState) {
   }
   listeners.forEach((l) => l())
 }
+
+/** Lectura directa del estado (para pruebas y funciones fuera de React). */
+export const getMockState = (): MockState => state
 
 /** Hook: devuelve los datos y vuelve a pintar la pantalla cuando cambian. */
 export function useMockData(): MockState {
@@ -449,6 +482,9 @@ export function createGroup(input: NewGroup): Result {
     lastLessonNumber: 0,
     plannedLessonNumber: 1,
     status: 'draft',
+    roomId: null,
+    // Pantalla anterior de grupos: no tiene botón de publicar, así que se publica de una vez.
+    published: true,
   }
   update((s) => ({
     ...s,
@@ -674,4 +710,265 @@ export function studentAttendance(s: Student): number {
   const mine = state.attendance.filter((a) => a.studentId === s.id)
   if (mine.length === 0) return s.attendance
   return Math.round((100 * mine.filter((a) => a.present).length) / mine.length)
+}
+
+// ---------------------------------------------------------------------
+// Salones
+// ---------------------------------------------------------------------
+export function createRoom(name: string, capacity: number | null): Result {
+  const clean = name.trim()
+  if (!clean) return fail('Escribe el nombre del salón.')
+  if (state.rooms.some((r) => r.name.toLowerCase() === clean.toLowerCase()))
+    return fail('Ya existe un salón con ese nombre.')
+  if (capacity !== null && (!Number.isInteger(capacity) || capacity < 1))
+    return fail('El cupo debe ser un número mayor que cero.')
+  const room: Room = { id: `r-${Date.now().toString(36)}`, name: clean, capacity }
+  update((s) => ({ ...s, rooms: [...s.rooms, room] }))
+  return ok
+}
+
+/** Borra el salón; los grupos que lo usaban quedan sin salón. */
+export function deleteRoom(id: string) {
+  update((s) => ({
+    ...s,
+    rooms: s.rooms.filter((r) => r.id !== id),
+    groups: s.groups.map((g) => (g.roomId === id ? { ...g, roomId: null } : g)),
+  }))
+}
+
+export const roomById = (id: string | null) => (id ? state.rooms.find((r) => r.id === id) : undefined)
+
+// ---------------------------------------------------------------------
+// Guardar un grupo completo (datos, horario, salón, profesor y alumnos) de una vez
+// ---------------------------------------------------------------------
+export interface GroupDraft {
+  name: string
+  level: Level
+  days: Day[]
+  time: string
+  endTime: string
+  roomId: string | null
+  teacherId: string | null
+  studentIds: string[]
+}
+
+/** Motivo por el que el salón está ocupado en ese horario, o null si está libre. */
+export function roomProblem(roomId: string, groupId: string | null, schedule: Schedule): string | null {
+  const room = state.rooms.find((r) => r.id === roomId)
+  if (!room) return 'El salón no existe.'
+  const clash = state.groups.find((g) => g.id !== groupId && g.roomId === roomId && overlaps(g, schedule))
+  return clash ? `El ${room.name} ya está ocupado por ${clash.name} (${scheduleLabel(clash)}).` : null
+}
+
+/** Motivo por el que el profesor no puede tomar el grupo, o null si puede (para mostrarlo antes de guardar). */
+export function teacherAvailability(
+  teacherId: string,
+  groupId: string | null,
+  draft: Pick<GroupDraft, 'level' | 'days' | 'time' | 'endTime'>,
+): string | null {
+  if (!draft.days.length || !draft.time || !draft.endTime) {
+    const t = state.teachers.find((x) => x.id === teacherId)
+    return t && !t.levels.includes(draft.level) ? `No enseña ${draft.level}.` : null
+  }
+  return teacherProblem(teacherId, { id: groupId, ...draft })
+}
+
+export type SaveGroupResult = { ok: true; id: string } | { ok: false; error: string }
+
+/**
+ * Crea (groupId = null) o actualiza un grupo con todo lo que se editó en el panel.
+ * Revisa todo antes de cambiar nada: si algo falla, no se guarda nada.
+ */
+export function saveGroup(groupId: string | null, draft: GroupDraft): SaveGroupResult {
+  const name = draft.name.trim()
+  if (!name) return { ok: false, error: 'Escribe el nombre del grupo.' }
+  if (state.groups.some((g) => g.id !== groupId && g.name.trim().toLowerCase() === name.toLowerCase()))
+    return { ok: false, error: 'Ya existe un grupo con ese nombre.' }
+  const badSchedule = scheduleError(draft)
+  if (badSchedule) return { ok: false, error: badSchedule }
+  if (draft.roomId) {
+    const problem = roomProblem(draft.roomId, groupId, draft)
+    if (problem) return { ok: false, error: problem }
+    const room = roomById(draft.roomId)
+    if (room?.capacity && draft.studentIds.length > room.capacity)
+      return {
+        ok: false,
+        error: `El ${room.name} tiene cupo para ${room.capacity} y el grupo tiene ${draft.studentIds.length} alumnos.`,
+      }
+  }
+  if (draft.teacherId) {
+    const problem = teacherProblem(draft.teacherId, { id: groupId, ...draft })
+    if (problem) return { ok: false, error: problem }
+  }
+  const inactive = draft.studentIds.find((id) => !state.students.find((s) => s.id === id)?.active)
+  if (inactive) return { ok: false, error: 'Hay un alumno inactivo en la lista.' }
+
+  const existing = groupId ? state.groups.find((g) => g.id === groupId) : undefined
+  if (groupId && !existing) return { ok: false, error: 'El grupo no existe.' }
+  const id = existing?.id ?? `g-${Date.now().toString(36)}`
+  const fields = {
+    name,
+    level: draft.level,
+    days: draft.days,
+    time: draft.time,
+    endTime: draft.endTime,
+    roomId: draft.roomId,
+    teacherId: draft.teacherId,
+  }
+
+  update((s) => ({
+    ...s,
+    groups: existing
+      ? s.groups.map((g) => (g.id === id ? { ...g, ...fields } : g))
+      : [
+          ...s.groups,
+          {
+            id,
+            ...fields,
+            lastLessonNumber: 0,
+            plannedLessonNumber: 1,
+            status: 'draft' as const,
+            published: false,
+          },
+        ],
+    students: s.students.map((st) =>
+      draft.studentIds.includes(st.id)
+        ? { ...st, groupId: id }
+        : st.groupId === id
+          ? { ...st, groupId: null }
+          : st,
+    ),
+  }))
+  return { ok: true, id }
+}
+
+/** El profesor empieza a ver el grupo (con su horario, salón, nivel y alumnos). */
+export function publishGroup(id: string): Result {
+  const g = state.groups.find((x) => x.id === id)
+  if (!g) return fail('El grupo no existe.')
+  if (!g.teacherId) return fail('Asígnale un profesor antes de publicarlo.')
+  update((s) => ({ ...s, groups: s.groups.map((x) => (x.id === id ? { ...x, published: true } : x)) }))
+  return ok
+}
+
+/** El profesor deja de ver el grupo hasta que se vuelva a publicar. */
+export function unpublishGroup(id: string) {
+  update((s) => ({ ...s, groups: s.groups.map((x) => (x.id === id ? { ...x, published: false } : x)) }))
+}
+
+// ---------------------------------------------------------------------
+// Editar datos de profesores y estudiantes
+// ---------------------------------------------------------------------
+const digitsOf = (v: string) => v.replace(/\D/g, '')
+const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+const validDoc = (v: string) => digitsOf(v).length >= 6 && digitsOf(v).length <= 12
+
+export type TeacherChanges = Pick<Teacher, 'firstName' | 'lastName' | 'phone' | 'docNumber' | 'levels'>
+
+/** Actualiza los datos del profesor. Su usuario no cambia (es con el que ya entra). */
+export function updateTeacher(id: string, changes: TeacherChanges): Result {
+  const t = state.teachers.find((x) => x.id === id)
+  if (!t) return fail('El profesor no existe.')
+  if (!changes.firstName.trim() || !changes.lastName.trim()) return fail('Escribe nombres y apellidos.')
+  if (digitsOf(changes.phone).length < 7) return fail('Revisa el teléfono.')
+  if (!validDoc(changes.docNumber)) return fail('Revisa el número de documento.')
+  const doc = digitsOf(changes.docNumber)
+  if (state.teachers.some((x) => x.id !== id && x.docNumber === doc))
+    return fail('Ya existe otro profesor con ese documento.')
+  if (changes.levels.length === 0) return fail('Elige al menos un nivel que pueda enseñar.')
+  const blocked = state.groups.find((g) => g.teacherId === id && !changes.levels.includes(g.level))
+  if (blocked)
+    return fail(
+      `Dicta el grupo ${blocked.name} (${blocked.level}). Primero asígnale otro profesor a ese grupo.`,
+    )
+
+  update((s) => ({
+    ...s,
+    teachers: s.teachers.map((x) =>
+      x.id === id
+        ? {
+            ...x,
+            firstName: changes.firstName.trim(),
+            lastName: changes.lastName.trim(),
+            phone: changes.phone.trim(),
+            docNumber: doc,
+            levels: LEVELS.filter((l) => changes.levels.includes(l)),
+            // Si aún no cambia la clave inicial, la clave sigue siendo su documento (el nuevo).
+            password: x.mustChangePassword ? doc : x.password,
+          }
+        : x,
+    ),
+  }))
+  return ok
+}
+
+export type StudentChanges = Pick<
+  Student,
+  | 'firstName'
+  | 'lastName'
+  | 'docType'
+  | 'docNumber'
+  | 'phone'
+  | 'email'
+  | 'guardianName'
+  | 'guardianPhone'
+  | 'active'
+>
+
+function studentProblem(id: string | null, c: StudentChanges): string | null {
+  if (!c.firstName.trim() || !c.lastName.trim()) return 'Escribe nombres y apellidos.'
+  if (!validDoc(c.docNumber)) return 'Revisa el número de documento.'
+  if (state.students.some((x) => x.id !== id && x.docNumber === digitsOf(c.docNumber)))
+    return 'Ya existe otro estudiante con ese documento.'
+  if (digitsOf(c.phone).length < 7) return 'Revisa el teléfono.'
+  if (c.email?.trim() && !isEmail(c.email.trim())) return 'Revisa el correo.'
+  if (c.guardianPhone?.trim() && digitsOf(c.guardianPhone).length < 7)
+    return 'Revisa el teléfono del acudiente.'
+  // Obligatorio al registrar un menor; a los que ya existen se les puede completar después.
+  if (id === null && c.docType === 'TI' && !c.guardianName?.trim())
+    return 'Los menores de edad (TI) necesitan un acudiente.'
+  return null
+}
+
+const cleanStudent = (c: StudentChanges) => ({
+  firstName: c.firstName.trim(),
+  lastName: c.lastName.trim(),
+  docType: c.docType,
+  docNumber: digitsOf(c.docNumber),
+  phone: c.phone.trim(),
+  email: c.email?.trim() || undefined,
+  guardianName: c.guardianName?.trim() || undefined,
+  guardianPhone: c.guardianPhone?.trim() || undefined,
+  active: c.active,
+})
+
+export function updateStudent(id: string, changes: StudentChanges): Result {
+  if (!state.students.some((x) => x.id === id)) return fail('El estudiante no existe.')
+  const problem = studentProblem(id, changes)
+  if (problem) return fail(problem)
+  update((s) => ({
+    ...s,
+    students: s.students.map((x) =>
+      x.id === id
+        ? // Si lo marcan como inactivo (se retiró), sale de su grupo.
+          { ...x, ...cleanStudent(changes), groupId: changes.active ? x.groupId : null }
+        : x,
+    ),
+  }))
+  return ok
+}
+
+export function createStudent(changes: StudentChanges): Result {
+  const problem = studentProblem(null, changes)
+  if (problem) return fail(problem)
+  const student: Student = {
+    id: `s-${Date.now().toString(36)}`,
+    ...cleanStudent(changes),
+    groupId: null,
+    paidUntil: null,
+    attendance: 100,
+    practicedLastWeek: false,
+  }
+  update((s) => ({ ...s, students: [...s.students, student] }))
+  return ok
 }

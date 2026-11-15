@@ -19,7 +19,7 @@ export function AttendancePage() {
   const { groupId = '' } = useParams()
   const { profile } = useAuth()
   const { groups } = useMockData()
-  const group = groups.find((g) => g.id === groupId && g.teacherId === profile?.id)
+  const group = groups.find((g) => g.id === groupId && g.teacherId === profile?.id && g.published)
   const today = todayISO()
   const [date, setDate] = useState(today)
 
