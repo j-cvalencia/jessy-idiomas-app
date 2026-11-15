@@ -3,6 +3,7 @@ import { HomePage } from '@/features/home/HomePage'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { ActivatePage } from '@/features/auth/ActivatePage'
 import { RequireRole } from '@/features/auth/RequireRole'
+import { DirectorHomePage } from '@/features/director/DirectorHomePage'
 import { StudentsPage } from '@/features/students/StudentsPage'
 import { GroupsPage } from '@/features/groups/GroupsPage'
 import { PlanningPage } from '@/features/planning/PlanningPage'
@@ -24,7 +25,7 @@ export const router = createBrowserRouter([
       </RequireRole>
     ),
     children: [
-      { index: true, element: <Placeholder title="Resumen" card="7.1" /> },
+      { index: true, element: <DirectorHomePage /> },
       { path: 'estudiantes', element: <StudentsPage /> },
       { path: 'grupos', element: <GroupsPage /> },
       { path: 'planificacion', element: <PlanningPage /> },
