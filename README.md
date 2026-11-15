@@ -69,6 +69,13 @@ Copia la `API URL` y la `anon key` que imprime `supabase start` en tu `.env.loca
 3. `npx supabase db push` para aplicar las migraciones.
 4. `npx supabase functions deploy admin-users` y `npx supabase functions deploy activate-account --no-verify-jwt`
 
+### Estudiantes, salones y horarios (Fase 1)
+
+- **Los estudiantes no necesitan cuenta.** El director los registra en la tabla `students` (ficha completa: contacto, fecha de ingreso, estado y datos de retiro). `profiles` es solo para quien inicia sesión (director y profesores). En la Fase 2, al activarle la cuenta a un estudiante, se enlaza con `students.profile_id`.
+- **Horarios:** cada grupo tiene una o varias franjas en `group_schedules` (día 1 = lunes … 7 = domingo, hora de inicio, hora de salida y salón de `rooms`).
+- **Reglas que pone la base de datos** (con mensajes en español para mostrarlos tal cual): un salón no puede tener dos clases a la misma hora, un profesor no puede tener dos grupos a la misma hora y solo se le puede asignar un grupo de un nivel que tenga en `teacher_levels`.
+- La vista `student_overview` trae para la pantalla de Estudiantes el grupo actual, los meses estudiados, el % de asistencia y si pagó el mes.
+
 ### Cómo funciona el acceso
 
 - **Nadie se registra solo.** El director crea cada cuenta (Edge Function `admin-users`) y la plataforma le da un **código de activación de 6 dígitos** para entregarle a la persona.
