@@ -8,11 +8,16 @@ const tabs = [
 ]
 
 export function StudentLayout() {
-  const { profile } = useAuth()
+  const { profile, signOut } = useAuth()
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col bg-surface">
       <header className="bg-ink px-5 pb-6 pt-5 text-white">
-        <img src="/favicon.svg" alt="" className="h-10 w-10" />
+        <div className="flex items-center justify-between">
+          <img src="/favicon.svg" alt="" className="h-10 w-10" />
+          <button onClick={signOut} className="min-h-11 px-2 text-sm font-semibold hover:underline">
+            Salir
+          </button>
+        </div>
         <h1 className="mt-3 font-display text-2xl font-extrabold">Hola, {profile?.first_name}</h1>
       </header>
       <main className="flex-1 p-5">
