@@ -187,6 +187,28 @@ function PhraseMarquee() {
   )
 }
 
+/** Video de las clases de la academia. Sin sonido y en bucle; si la persona prefiere menos movimiento, queda la foto fija. */
+function HeroVideo({ className }: { className: string }) {
+  const [reduceMotion] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  )
+  if (reduceMotion)
+    return <img src="/media/clase-academia.jpg" alt="" aria-hidden="true" className={className} />
+  return (
+    <video
+      className={className}
+      src="/media/clase-academia.mp4"
+      poster="/media/clase-academia.jpg"
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      aria-hidden="true"
+    />
+  )
+}
+
 export function HomePage() {
   const { session, profile } = useAuth()
   const [activeLevel, setActiveLevel] = useState(3)
@@ -244,16 +266,21 @@ export function HomePage() {
         </div>
       </header>
 
-      {/* Portada principal */}
-      <section
-        className="relative flex min-h-[500px] items-center overflow-hidden bg-ink bg-cover bg-center text-white sm:min-h-[570px]"
-        style={{
-          backgroundImage:
-            "linear-gradient(90deg, rgba(18,22,28,.97) 0%, rgba(18,22,28,.88) 48%, rgba(18,22,28,.52) 100%), url('https://images.unsplash.com/photo-1529390079861-591de354faf5?auto=format&fit=crop&w=1800&q=90')",
-        }}
-      >
+      {/* Portada principal con video de las clases */}
+      <section className="relative flex min-h-[500px] items-center overflow-hidden bg-ink text-white sm:min-h-[570px]">
+        {/* Fondo: el mismo video, desenfocado y oscuro, para dar movimiento sin distraer */}
+        <HeroVideo className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-md lg:opacity-40 lg:blur-2xl" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(18,22,28,.97)_0%,rgba(18,22,28,.86)_50%,rgba(18,22,28,.55)_100%)]" />
+
         <div className="pointer-events-none absolute -right-20 top-10 h-80 w-80 rounded-full border border-white/15 sm:h-[430px] sm:w-[430px]" />
         <div className="pointer-events-none absolute -right-8 top-24 h-64 w-64 rounded-full border border-white/10 sm:h-[350px] sm:w-[350px]" />
+
+        {/* Video nítido en formato celular (solo en pantallas medianas y grandes) */}
+        <div className="pointer-events-none absolute right-[6%] top-1/2 hidden -translate-y-1/2 lg:block">
+          <div className="w-[250px] rotate-2 overflow-hidden rounded-[2rem] border-[6px] border-white/10 shadow-2xl shadow-black/60 xl:w-[280px]">
+            <HeroVideo className="aspect-[478/850] w-full object-cover" />
+          </div>
+        </div>
 
         <div className="relative mx-auto w-full max-w-7xl px-5 py-20 sm:px-8 md:py-24">
           <div className="max-w-2xl">
