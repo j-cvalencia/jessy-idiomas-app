@@ -3,6 +3,9 @@ import { HomePage } from '@/features/home/HomePage'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { ActivatePage } from '@/features/auth/ActivatePage'
 import { RequireRole } from '@/features/auth/RequireRole'
+import { StudentsPage } from '@/features/students/StudentsPage'
+import { GroupsPage } from '@/features/groups/GroupsPage'
+import { PlanningPage } from '@/features/planning/PlanningPage'
 import { Placeholder } from '@/components/ui/Placeholder'
 import { DirectorLayout } from './layouts/DirectorLayout'
 import { TeacherLayout } from './layouts/TeacherLayout'
@@ -22,9 +25,9 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <Placeholder title="Resumen" card="7.1" /> },
-      { path: 'estudiantes', element: <Placeholder title="Estudiantes" card="3.1" /> },
-      { path: 'grupos', element: <Placeholder title="Grupos y profesores" card="3.2 / 3.3" /> },
-      { path: 'planificacion', element: <Placeholder title="Planificación semanal" card="5.1" /> },
+      { path: 'estudiantes', element: <StudentsPage /> },
+      { path: 'grupos', element: <GroupsPage /> },
+      { path: 'planificacion', element: <PlanningPage /> },
       { path: 'pagos', element: <Placeholder title="Pagos" card="3.4" /> },
       { path: 'curriculo', element: <Placeholder title="Currículo A1–C1" card="4.1" /> },
       { path: 'reportes', element: <Placeholder title="Reportes" card="7.2" /> },

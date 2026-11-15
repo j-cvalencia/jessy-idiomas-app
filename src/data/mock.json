@@ -1,0 +1,633 @@
+{
+  "teachers": [],
+  "groups": [],
+  "students": [
+    {
+      "id": "s-01",
+      "firstName": "Valentina",
+      "lastName": "Ospina Cardona",
+      "docType": "TI",
+      "docNumber": "1007391257",
+      "phone": "3102371913",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "al_dia",
+      "attendance": 96,
+      "practicedLastWeek": true
+    },
+    {
+      "id": "s-02",
+      "firstName": "Samuel",
+      "lastName": "Restrepo Giraldo",
+      "docType": "TI",
+      "docNumber": "1014782514",
+      "phone": "3112743826",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "al_dia",
+      "attendance": 92,
+      "practicedLastWeek": true
+    },
+    {
+      "id": "s-03",
+      "firstName": "Isabella",
+      "lastName": "Muñoz Arango",
+      "docType": "TI",
+      "docNumber": "1022173771",
+      "phone": "3123115739",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "al_dia",
+      "attendance": 88,
+      "practicedLastWeek": false
+    },
+    {
+      "id": "s-04",
+      "firstName": "Mateo",
+      "lastName": "Zapata Londoño",
+      "docType": "TI",
+      "docNumber": "1029565028",
+      "phone": "3133487652",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "pendiente",
+      "attendance": 79,
+      "practicedLastWeek": true
+    },
+    {
+      "id": "s-05",
+      "firstName": "Sara",
+      "lastName": "Restrepo Vélez",
+      "docType": "TI",
+      "docNumber": "1036956285",
+      "phone": "3143859565",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "al_dia",
+      "attendance": 100,
+      "practicedLastWeek": true
+    },
+    {
+      "id": "s-06",
+      "firstName": "Juan David",
+      "lastName": "Hoyos Mesa",
+      "docType": "TI",
+      "docNumber": "1044347542",
+      "phone": "3104231478",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "al_dia",
+      "attendance": 90,
+      "practicedLastWeek": true
+    },
+    {
+      "id": "s-07",
+      "firstName": "Camilo",
+      "lastName": "Escobar Ruiz",
+      "docType": "CC",
+      "docNumber": "1081738799",
+      "phone": "3114603391",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "al_dia",
+      "attendance": 94,
+      "practicedLastWeek": true
+    },
+    {
+      "id": "s-08",
+      "firstName": "Daniela",
+      "lastName": "Salazar Pino",
+      "docType": "CC",
+      "docNumber": "1089130056",
+      "phone": "3124975304",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "al_dia",
+      "attendance": 85,
+      "practicedLastWeek": false
+    },
+    {
+      "id": "s-09",
+      "firstName": "Santiago",
+      "lastName": "Betancur Roldán",
+      "docType": "CC",
+      "docNumber": "1096521313",
+      "phone": "3135347217",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "pendiente",
+      "attendance": 72,
+      "practicedLastWeek": true
+    },
+    {
+      "id": "s-10",
+      "firstName": "Mariana",
+      "lastName": "Ruiz Ochoa",
+      "docType": "CC",
+      "docNumber": "1103912570",
+      "phone": "3145719130",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "al_dia",
+      "attendance": 91,
+      "practicedLastWeek": false
+    },
+    {
+      "id": "s-11",
+      "firstName": "Luis Fernando",
+      "lastName": "Mejía Parra",
+      "docType": "CC",
+      "docNumber": "1111303827",
+      "phone": "3106091043",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "al_dia",
+      "attendance": 87,
+      "practicedLastWeek": true
+    },
+    {
+      "id": "s-12",
+      "firstName": "Juliana",
+      "lastName": "Cano Franco",
+      "docType": "TI",
+      "docNumber": "1088695084",
+      "phone": "3116462956",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "al_dia",
+      "attendance": 98,
+      "practicedLastWeek": true
+    },
+    {
+      "id": "s-13",
+      "firstName": "Emmanuel",
+      "lastName": "Vargas Acosta",
+      "docType": "TI",
+      "docNumber": "1096086341",
+      "phone": "3126834869",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "al_dia",
+      "attendance": 83,
+      "practicedLastWeek": false
+    },
+    {
+      "id": "s-14",
+      "firstName": "Sofía",
+      "lastName": "Henao Bedoya",
+      "docType": "TI",
+      "docNumber": "1003477599",
+      "phone": "3137206782",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "al_dia",
+      "attendance": 95,
+      "practicedLastWeek": true
+    },
+    {
+      "id": "s-15",
+      "firstName": "Tomás",
+      "lastName": "Aristizábal Sosa",
+      "docType": "TI",
+      "docNumber": "1010868856",
+      "phone": "3147578695",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "pendiente",
+      "attendance": 76,
+      "practicedLastWeek": true
+    },
+    {
+      "id": "s-16",
+      "firstName": "Gabriela",
+      "lastName": "Montoya Cruz",
+      "docType": "CC",
+      "docNumber": "1048260113",
+      "phone": "3107950608",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "al_dia",
+      "attendance": 89,
+      "practicedLastWeek": false
+    },
+    {
+      "id": "s-17",
+      "firstName": "Andrea",
+      "lastName": "Posada Villa",
+      "docType": "CC",
+      "docNumber": "1055651370",
+      "phone": "3118322521",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "al_dia",
+      "attendance": 93,
+      "practicedLastWeek": true
+    },
+    {
+      "id": "s-18",
+      "firstName": "Sebastián",
+      "lastName": "Correa Ríos",
+      "docType": "CC",
+      "docNumber": "1063042627",
+      "phone": "3128694434",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "al_dia",
+      "attendance": 90,
+      "practicedLastWeek": true
+    },
+    {
+      "id": "s-19",
+      "firstName": "Laura Cristina",
+      "lastName": "Marín Soto",
+      "docType": "CC",
+      "docNumber": "1070433884",
+      "phone": "3139066347",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "al_dia",
+      "attendance": 86,
+      "practicedLastWeek": true
+    },
+    {
+      "id": "s-20",
+      "firstName": "Nicolás",
+      "lastName": "Echeverri Jaramillo",
+      "docType": "CC",
+      "docNumber": "1077825141",
+      "phone": "3149438260",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "al_dia",
+      "attendance": 81,
+      "practicedLastWeek": false
+    },
+    {
+      "id": "s-21",
+      "firstName": "Paula Andrea",
+      "lastName": "Gaviria Naranjo",
+      "docType": "CC",
+      "docNumber": "1085216398",
+      "phone": "3109810173",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "al_dia",
+      "attendance": 97,
+      "practicedLastWeek": true
+    },
+    {
+      "id": "s-22",
+      "firstName": "Esteban",
+      "lastName": "Duque Barrera",
+      "docType": "CC",
+      "docNumber": "1092607655",
+      "phone": "3111182086",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "pendiente",
+      "attendance": 84,
+      "practicedLastWeek": true
+    },
+    {
+      "id": "s-23",
+      "firstName": "Manuela",
+      "lastName": "Toro Quintero",
+      "docType": "CC",
+      "docNumber": "1099998912",
+      "phone": "3121553999",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "al_dia",
+      "attendance": 92,
+      "practicedLastWeek": true
+    },
+    {
+      "id": "s-24",
+      "firstName": "Jhon Alexander",
+      "lastName": "Builes Tamayo",
+      "docType": "CC",
+      "docNumber": "1107390169",
+      "phone": "3131925912",
+      "groupId": null,
+      "active": true,
+      "paymentStatus": "al_dia",
+      "attendance": 88,
+      "practicedLastWeek": true
+    },
+    {
+      "id": "s-25",
+      "firstName": "Karen",
+      "lastName": "Úsuga Lopera",
+      "docType": "CC",
+      "docNumber": "1114781426",
+      "phone": "3142297825",
+      "groupId": null,
+      "active": false,
+      "paymentStatus": "al_dia",
+      "attendance": 60,
+      "practicedLastWeek": false
+    }
+  ],
+  "lessons": [
+    {
+      "level": "A1",
+      "number": 1,
+      "topic": "Greetings and introductions",
+      "isExam": false
+    },
+    {
+      "level": "A1",
+      "number": 2,
+      "topic": "Verb to be",
+      "isExam": false
+    },
+    {
+      "level": "A1",
+      "number": 3,
+      "topic": "Verb to be (preguntas)",
+      "isExam": false
+    },
+    {
+      "level": "A1",
+      "number": 4,
+      "topic": "Numbers and ages",
+      "isExam": false
+    },
+    {
+      "level": "A1",
+      "number": 5,
+      "topic": "Family members",
+      "isExam": false
+    },
+    {
+      "level": "A1",
+      "number": 6,
+      "topic": "Possessive adjectives",
+      "isExam": false
+    },
+    {
+      "level": "A1",
+      "number": 7,
+      "topic": "Verb to have",
+      "isExam": false
+    },
+    {
+      "level": "A1",
+      "number": 8,
+      "topic": "There is / there are",
+      "isExam": false
+    },
+    {
+      "level": "A1",
+      "number": 9,
+      "topic": "Daily routine",
+      "isExam": false
+    },
+    {
+      "level": "A1",
+      "number": 10,
+      "topic": "Present simple",
+      "isExam": false
+    },
+    {
+      "level": "A1",
+      "number": 11,
+      "topic": "Módulo 1",
+      "isExam": true
+    },
+    {
+      "level": "A2",
+      "number": 1,
+      "topic": "Present continuous",
+      "isExam": false
+    },
+    {
+      "level": "A2",
+      "number": 2,
+      "topic": "Comparatives",
+      "isExam": false
+    },
+    {
+      "level": "A2",
+      "number": 3,
+      "topic": "Superlatives",
+      "isExam": false
+    },
+    {
+      "level": "A2",
+      "number": 4,
+      "topic": "Countable and uncountable",
+      "isExam": false
+    },
+    {
+      "level": "A2",
+      "number": 5,
+      "topic": "Some and any",
+      "isExam": false
+    },
+    {
+      "level": "A2",
+      "number": 6,
+      "topic": "Food and restaurants",
+      "isExam": false
+    },
+    {
+      "level": "A2",
+      "number": 7,
+      "topic": "Can and can't",
+      "isExam": false
+    },
+    {
+      "level": "A2",
+      "number": 8,
+      "topic": "Be going to",
+      "isExam": false
+    },
+    {
+      "level": "A2",
+      "number": 9,
+      "topic": "Future with will",
+      "isExam": false
+    },
+    {
+      "level": "A2",
+      "number": 10,
+      "topic": "Prepositions of place",
+      "isExam": false
+    },
+    {
+      "level": "A2",
+      "number": 11,
+      "topic": "Past of to be",
+      "isExam": false
+    },
+    {
+      "level": "A2",
+      "number": 12,
+      "topic": "Past simple",
+      "isExam": false
+    },
+    {
+      "level": "A2",
+      "number": 13,
+      "topic": "Past simple (preguntas)",
+      "isExam": false
+    },
+    {
+      "level": "A2",
+      "number": 14,
+      "topic": "Módulo 2",
+      "isExam": true
+    },
+    {
+      "level": "B1",
+      "number": 1,
+      "topic": "Present perfect",
+      "isExam": false
+    },
+    {
+      "level": "B1",
+      "number": 2,
+      "topic": "Present perfect vs past simple",
+      "isExam": false
+    },
+    {
+      "level": "B1",
+      "number": 3,
+      "topic": "Used to",
+      "isExam": false
+    },
+    {
+      "level": "B1",
+      "number": 4,
+      "topic": "First conditional",
+      "isExam": false
+    },
+    {
+      "level": "B1",
+      "number": 5,
+      "topic": "Modal verbs of obligation",
+      "isExam": false
+    },
+    {
+      "level": "B1",
+      "number": 6,
+      "topic": "Módulo 1",
+      "isExam": true
+    },
+    {
+      "level": "B1",
+      "number": 7,
+      "topic": "Passive voice",
+      "isExam": false
+    },
+    {
+      "level": "B1",
+      "number": 8,
+      "topic": "Reported speech",
+      "isExam": false
+    },
+    {
+      "level": "B1",
+      "number": 9,
+      "topic": "Second conditional",
+      "isExam": false
+    },
+    {
+      "level": "B1",
+      "number": 10,
+      "topic": "Relative clauses",
+      "isExam": false
+    },
+    {
+      "level": "B1",
+      "number": 11,
+      "topic": "Módulo 2",
+      "isExam": true
+    },
+    {
+      "level": "B2",
+      "number": 1,
+      "topic": "Narrative tenses",
+      "isExam": false
+    },
+    {
+      "level": "B2",
+      "number": 2,
+      "topic": "Past perfect",
+      "isExam": false
+    },
+    {
+      "level": "B2",
+      "number": 3,
+      "topic": "Modals of deduction",
+      "isExam": false
+    },
+    {
+      "level": "B2",
+      "number": 4,
+      "topic": "Wish and if only",
+      "isExam": false
+    },
+    {
+      "level": "B2",
+      "number": 5,
+      "topic": "Conditionals",
+      "isExam": false
+    },
+    {
+      "level": "B2",
+      "number": 6,
+      "topic": "Advanced passive",
+      "isExam": false
+    },
+    {
+      "level": "B2",
+      "number": 7,
+      "topic": "Debate vocabulary",
+      "isExam": false
+    },
+    {
+      "level": "B2",
+      "number": 8,
+      "topic": "Módulo 1",
+      "isExam": true
+    },
+    {
+      "level": "C1",
+      "number": 1,
+      "topic": "Mixed conditionals",
+      "isExam": false
+    },
+    {
+      "level": "C1",
+      "number": 2,
+      "topic": "Inversion for emphasis",
+      "isExam": false
+    },
+    {
+      "level": "C1",
+      "number": 3,
+      "topic": "Cleft sentences",
+      "isExam": false
+    },
+    {
+      "level": "C1",
+      "number": 4,
+      "topic": "Nuance with modals",
+      "isExam": false
+    },
+    {
+      "level": "C1",
+      "number": 5,
+      "topic": "Academic writing",
+      "isExam": false
+    },
+    {
+      "level": "C1",
+      "number": 6,
+      "topic": "Módulo 1",
+      "isExam": true
+    }
+  ]
+}
