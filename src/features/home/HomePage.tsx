@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '@/features/auth/auth-context'
 import { HOME_BY_ROLE } from '@/lib/types'
 
-const GREETINGS = ['hablar.', 'aprender.', 'avanzar.', 'comunicarte.']
+const GREETINGS = ['hablar.', 'viajar.', 'avanzar.', 'comunicarte.']
 
 const PHRASES = ["Let's practice", 'You can do it', 'Hello!', 'How are you?', 'Nice to meet you']
 
@@ -266,21 +266,14 @@ export function HomePage() {
         </div>
       </header>
 
-      {/* Portada principal con video de las clases */}
+      {/* Portada principal con video de las clases de fondo */}
       <section className="relative flex min-h-[500px] items-center overflow-hidden bg-ink text-white sm:min-h-[570px]">
-        {/* Fondo: el mismo video, desenfocado y oscuro, para dar movimiento sin distraer */}
-        <HeroVideo className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-md lg:opacity-40 lg:blur-2xl" />
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(18,22,28,.97)_0%,rgba(18,22,28,.86)_50%,rgba(18,22,28,.55)_100%)]" />
+        <HeroVideo className="absolute inset-0 h-full w-full object-cover object-[70%_center]" />
+        {/* Degradado: oscuro a la izquierda para leer el texto, el video se ve a la derecha */}
+        <div className="pointer-events-none absolute inset-0 bg-ink/75 md:bg-transparent md:bg-[linear-gradient(90deg,rgba(18,22,28,.96)_0%,rgba(18,22,28,.88)_38%,rgba(18,22,28,.45)_70%,rgba(18,22,28,.25)_100%)]" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-ink/70 to-transparent" />
 
-        <div className="pointer-events-none absolute -right-20 top-10 h-80 w-80 rounded-full border border-white/15 sm:h-[430px] sm:w-[430px]" />
-        <div className="pointer-events-none absolute -right-8 top-24 h-64 w-64 rounded-full border border-white/10 sm:h-[350px] sm:w-[350px]" />
-
-        {/* Video nítido en formato celular (solo en pantallas medianas y grandes) */}
-        <div className="pointer-events-none absolute right-[6%] top-1/2 hidden -translate-y-1/2 lg:block">
-          <div className="w-[250px] rotate-2 overflow-hidden rounded-[2rem] border-[6px] border-white/10 shadow-2xl shadow-black/60 xl:w-[280px]">
-            <HeroVideo className="aspect-[478/850] w-full object-cover" />
-          </div>
-        </div>
+        <div className="pointer-events-none absolute -right-24 top-1/2 hidden h-[520px] w-[520px] -translate-y-1/2 animate-[spin_60s_linear_infinite] rounded-full border-2 border-dashed border-white/25 md:block" />
 
         <div className="relative mx-auto w-full max-w-7xl px-5 py-20 sm:px-8 md:py-24">
           <div className="max-w-2xl">
