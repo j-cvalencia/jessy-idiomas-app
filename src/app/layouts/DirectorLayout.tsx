@@ -17,7 +17,7 @@ export function DirectorLayout() {
     <div className="flex min-h-screen flex-wrap">
       <nav aria-label="Menú principal" className="flex flex-[1_1_240px] flex-col gap-6 bg-ink p-4 text-white">
         <div className="flex items-center gap-3 px-2">
-          <img src="/favicon.svg" alt="" className="h-11 w-11" />
+          <img src="/logo.webp" alt="" className="h-11 w-11" />
           <div>
             <p className="font-display font-extrabold tracking-wide">JESSY IDIOMAS</p>
             <p className="text-xs text-slate-400">Panel del director</p>

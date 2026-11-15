@@ -43,7 +43,7 @@ export function LoginPage() {
     <main className="flex min-h-screen flex-col bg-surface">
       <div className="flex flex-col items-center gap-3 border-b-4 border-accent bg-ink px-6 pb-20 pt-12 text-center">
         <Link to="/" aria-label="Volver al inicio">
-          <img src="/favicon.svg" alt="" className="h-24 w-24" />
+          <img src="/logo.webp" alt="" className="h-24 w-24" />
         </Link>
         <p className="font-display text-xl font-extrabold tracking-wide text-white">JESSY IDIOMAS</p>
         <p className="text-sm text-slate-300">Practica lo que ves en clase, cuando quieras</p>

@@ -13,7 +13,7 @@ export function StudentLayout() {
     <div className="mx-auto flex min-h-screen max-w-md flex-col bg-surface">
       <header className="bg-ink px-5 pb-6 pt-5 text-white">
         <div className="flex items-center justify-between">
-          <img src="/favicon.svg" alt="" className="h-10 w-10" />
+          <img src="/logo.webp" alt="" className="h-10 w-10" />
           <button onClick={signOut} className="min-h-11 px-2 text-sm font-semibold hover:underline">
             Salir
           </button>

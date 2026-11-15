@@ -236,7 +236,7 @@ export function HomePage() {
       <header className="sticky top-0 z-30 border-b border-white/10 bg-ink">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-3 sm:px-8">
           <Link to="/" className="flex shrink-0 items-center gap-2.5">
-            <img src="/favicon.svg" alt="Jessy Idiomas" className="h-9 w-9 rounded-full" />
+            <img src="/logo.webp" alt="Jessy Idiomas" className="h-10 w-10 rounded-full" />
             <span className="font-display text-sm font-extrabold tracking-wide text-white">
               JESSY IDIOMAS
             </span>
@@ -470,9 +470,9 @@ export function HomePage() {
           </div>
 
           <img
-            src="/favicon.svg"
+            src="/logo-512.webp"
             alt="Logo de Jessy Idiomas"
-            className="h-32 w-32 rounded-full border-4 border-white/80 bg-white p-2 shadow-xl sm:h-40 sm:w-40"
+            className="h-32 w-32 rounded-full border-4 border-white/80 shadow-xl sm:h-40 sm:w-40"
           />
         </div>
       </section>
@@ -481,7 +481,7 @@ export function HomePage() {
       <footer className="bg-ink py-9 text-white">
         <div className="mx-auto grid max-w-7xl gap-8 px-5 sm:px-8 md:grid-cols-3">
           <div className="flex items-center gap-3">
-            <img src="/favicon.svg" alt="" className="h-11 w-11 rounded-full" />
+            <img src="/logo.webp" alt="" className="h-11 w-11 rounded-full" />
             <div>
               <p className="text-xs font-extrabold">JESSY IDIOMAS</p>
               <p className="mt-1 text-[10px] text-slate-400">Academia de inglés</p>
