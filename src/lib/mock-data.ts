@@ -444,95 +444,12 @@ export function deleteTeacher(id: string) {
 // ---------------------------------------------------------------------
 // Grupos
 // ---------------------------------------------------------------------
-export interface NewGroup {
-  name: string
-  level: Level
-  days: Day[]
-  time: string
-  endTime: string
-  teacherId: string | null
-  studentIds: string[]
-}
-
-export function createGroup(input: NewGroup): Result {
-  const name = input.name.trim()
-  if (!name) return fail('Escribe el nombre del grupo.')
-  const badSchedule = scheduleError(input)
-  if (badSchedule) return fail(badSchedule)
-  if (input.teacherId) {
-    const problem = teacherProblem(input.teacherId, {
-      id: null,
-      level: input.level,
-      days: input.days,
-      time: input.time,
-      endTime: input.endTime,
-    })
-    if (problem) return fail(problem)
-  }
-
-  const id = `g-${Date.now().toString(36)}`
-  const group: Group = {
-    id,
-    name,
-    level: input.level,
-    teacherId: input.teacherId,
-    days: input.days,
-    time: input.time,
-    endTime: input.endTime,
-    lastLessonNumber: 0,
-    plannedLessonNumber: 1,
-    status: 'draft',
-    roomId: null,
-    // Pantalla anterior de grupos: no tiene botón de publicar, así que se publica de una vez.
-    published: true,
-  }
-  update((s) => ({
-    ...s,
-    groups: [...s.groups, group],
-    students: s.students.map((st) =>
-      input.studentIds.includes(st.id) && st.active ? { ...st, groupId: id } : st,
-    ),
-  }))
-  return ok
-}
-
-/** Cambia los días y las horas de un grupo que ya existe. */
-export function updateGroupSchedule(groupId: string, schedule: Schedule): Result {
-  const group = state.groups.find((g) => g.id === groupId)
-  if (!group) return fail('El grupo no existe.')
-  const badSchedule = scheduleError(schedule)
-  if (badSchedule) return fail(badSchedule)
-  if (group.teacherId) {
-    const problem = teacherProblem(group.teacherId, { ...group, ...schedule })
-    if (problem) return fail(problem)
-  }
-  update((s) => ({
-    ...s,
-    groups: s.groups.map((g) =>
-      g.id === groupId ? { ...g, days: schedule.days, time: schedule.time, endTime: schedule.endTime } : g,
-    ),
-  }))
-  return ok
-}
-
 export function deleteGroup(id: string) {
   update((s) => ({
     ...s,
     groups: s.groups.filter((g) => g.id !== id),
     students: s.students.map((st) => (st.groupId === id ? { ...st, groupId: null } : st)),
   }))
-}
-
-/** Asigna (o quita, con null) el profesor de un grupo. */
-export function assignTeacher(groupId: string, teacherId: string | null): Result {
-  const group = state.groups.find((g) => g.id === groupId)
-  if (!group) return fail('El grupo no existe.')
-  if (teacherId) {
-    const problem = teacherProblem(teacherId, group)
-    if (problem) return fail(problem)
-  }
-  update((s) => ({ ...s, groups: s.groups.map((g) => (g.id === groupId ? { ...g, teacherId } : g)) }))
-  return ok
 }
 
 /** Mueve un estudiante a un grupo (o lo deja sin grupo, con null). */

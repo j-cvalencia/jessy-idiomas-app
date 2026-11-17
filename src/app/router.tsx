@@ -8,7 +8,6 @@ import { AttendancePage } from '@/features/teacher/AttendancePage'
 import { RequireRole } from '@/features/auth/RequireRole'
 import { DirectorHomePage } from '@/features/director/DirectorHomePage'
 import { StudentsPage } from '@/features/students/StudentsPage'
-import { GroupsPage } from '@/features/groups/GroupsPage'
 import { GroupsWorkspace } from '@/features/groups/workspace/GroupsWorkspace'
 import { PlanningPage } from '@/features/planning/PlanningPage'
 import { PaymentsPage } from '@/features/payments/PaymentsPage'
@@ -34,8 +33,6 @@ export const router = createBrowserRouter([
       { index: true, element: <DirectorHomePage /> },
       { path: 'estudiantes', element: <StudentsPage /> },
       { path: 'grupos', element: <GroupsWorkspace /> },
-      // Pantalla anterior, para comparar mientras se revisa el rediseño.
-      { path: 'grupos-anterior', element: <GroupsPage /> },
       { path: 'planificacion', element: <PlanningPage /> },
       { path: 'pagos', element: <PaymentsPage /> },
       { path: 'curriculo', element: <Placeholder title="Currículo A1–C1" card="4.1" /> },

@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { useMockData, type Group } from '@/lib/mock-data'
+import { resetMockData, useMockData, type Group } from '@/lib/mock-data'
 import { usePersistentState } from '@/lib/use-persistent-state'
 import { GroupEditor } from './GroupEditor'
 import { GroupsTab } from './GroupsTab'
@@ -100,12 +99,20 @@ export function GroupsWorkspace() {
         {tab === 'sin-grupo' && <UnassignedTab onNotice={setNotice} />}
       </div>
 
-      <p className="text-xs text-muted">
-        ¿Buscas la pantalla anterior?{' '}
-        <Link to="/director/grupos-anterior" className="underline underline-offset-2">
-          Ver versión anterior
-        </Link>
-      </p>
+      <button
+        type="button"
+        onClick={() => {
+          if (
+            window.confirm('¿Volver a los datos de ejemplo? Se borra todo lo que creaste en el modo demo.')
+          ) {
+            resetMockData()
+            setNotice({ kind: 'ok', text: 'Se reiniciaron los datos de ejemplo.' })
+          }
+        }}
+        className="self-start text-xs font-semibold text-muted underline underline-offset-2 hover:text-ink"
+      >
+        Reiniciar datos de ejemplo
+      </button>
 
       {editing !== undefined && (
         <GroupEditor
